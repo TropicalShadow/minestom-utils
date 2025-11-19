@@ -5,7 +5,7 @@ slf4j = "2.0.17"
 logback = "1.5.21"
 luckperms = "5.5-SNAPSHOT"
 configurate = "4.2.0"
-hikari = "6.3.0"
+hikari = "7.0.2"
 h2database = "2.4.240"
 
 
