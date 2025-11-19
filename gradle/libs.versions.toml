@@ -1,0 +1,22 @@
+[versions]
+lombok = "1.18.42"
+minestom = "2025.10.31-1.21.10"
+slf4j = "2.0.17"
+logback = "1.5.21"
+luckperms = "5.5-SNAPSHOT"
+configurate = "4.2.0"
+hikari = "6.3.0"
+h2database = "2.4.240"
+
+
+[libraries]
+# Common
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+minestom = { module = "net.minestom:minestom", version.ref = "minestom" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+luckperms = { module = "dev.lu15:luckperms-minestom", version.ref = "luckperms" }
+sponge-configurate-core = { module = "org.spongepowered:configurate-core", version.ref = "configurate" }
+sponge-configurate-hocon = { module = "org.spongepowered:configurate-hocon", version.ref = "configurate" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+h2database = { module = "com.h2database:h2", version.ref = "h2database" }
