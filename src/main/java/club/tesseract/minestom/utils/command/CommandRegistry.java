@@ -11,7 +11,8 @@ public final class CommandRegistry {
         MinecraftServer.getCommandManager().register(
                 new StatsCommand(),
                 new StopCommand(),
-                new SudoCommand()
+                new SudoCommand(),
+                new TpsCommand()
         );
     }
 
