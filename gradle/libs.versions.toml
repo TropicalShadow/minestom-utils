@@ -7,6 +7,8 @@ luckperms = "5.5-SNAPSHOT"
 configurate = "4.2.0"
 hikari = "7.0.2"
 h2database = "2.4.240"
+polar = "1.15.0"
+fastutil = "8.5.18"
 
 
 [libraries]
@@ -20,3 +22,5 @@ sponge-configurate-core = { module = "org.spongepowered:configurate-core", versi
 sponge-configurate-hocon = { module = "org.spongepowered:configurate-hocon", version.ref = "configurate" }
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 h2database = { module = "com.h2database:h2", version.ref = "h2database" }
+minestom-polar = { module = "dev.hollowcube:polar", version.ref = "polar" }
+fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }

@@ -16,6 +16,7 @@ dependencies {
     annotationProcessor(libs.lombok)
 
     api(libs.minestom)
+    api(libs.minestom.polar)
     api(libs.slf4j.api)
 
     /* Luckperms */
@@ -26,6 +27,8 @@ dependencies {
 
     testImplementation(libs.logback)
     testImplementation(libs.minestom)
+    testImplementation(libs.minestom.polar)
+    testImplementation(libs.fastutil)
     testImplementation(libs.luckperms)
 
     /* Luckperms */
