@@ -1,4 +1,4 @@
-package club.tesseract.minestom.test;
+package club.tesseract.minestom.test.instance;
 
 import club.tesseract.minestom.utils.instance.dimension.FullBrightDimension;
 import net.minestom.server.instance.InstanceContainer;
