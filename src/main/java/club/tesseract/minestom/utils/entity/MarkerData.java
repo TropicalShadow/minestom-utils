@@ -3,12 +3,14 @@ package club.tesseract.minestom.utils.entity;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
-import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.component.DataComponents;
+import net.minestom.server.coordinate.Area;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
+import net.minestom.server.instance.Instance;
 import net.minestom.server.item.component.CustomData;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -18,9 +20,17 @@ import java.util.UUID;
 public record MarkerData(UUID uuid, Pos position, @Nullable String name, @Nullable Vec minRegion, @Nullable Vec maxRegion,
                          int lineArgb, float lineThickness, int faceArgb) {
 
-    public BoundingBox getBoundingBox(){
+    @NotNull
+    public Entity createDisplay(@NotNull Instance instance){
+        CuboidVisualiser visualiser = new CuboidVisualiser(Area.cuboid(Vec.ZERO, maxRegion.sub(minRegion)));
+        visualiser.setInstance(instance, position);
+        return visualiser;
+    }
+
+    @NotNull
+    public Area.Cuboid getBoundingBox(){
         assert minRegion != null && maxRegion != null;
-        return BoundingBox.fromPoints(minRegion, maxRegion);
+        return Area.cuboid(minRegion, maxRegion);
     }
 
     public static CompoundBinaryTag getData(Entity marker) {

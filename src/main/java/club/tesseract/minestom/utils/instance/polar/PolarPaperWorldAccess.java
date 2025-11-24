@@ -1,5 +1,6 @@
 package club.tesseract.minestom.utils.instance.polar;
 
+import club.tesseract.minestom.utils.entity.NoPhysicsEntity;
 import lombok.extern.slf4j.Slf4j;
 import net.hollowcube.polar.PolarWorldAccess;
 import net.kyori.adventure.key.Key;
@@ -10,7 +11,6 @@ import net.minestom.server.codec.Codec;
 import net.minestom.server.codec.Transcoder;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
-import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.MetadataDef;
 import net.minestom.server.event.instance.InstanceRegisterEvent;
@@ -67,7 +67,7 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
                     if(entityType == null) continue;
                     UUID uniqueId = entityNBT.getUniqueId().orElse(UUID.randomUUID());
                     OpenEntity entity = new OpenEntity(entityType, uniqueId);
-                    Pos location = entityNBT.getVec().withDirection(entityNBT.getDirection());
+                    Pos location = entityNBT.getVec().withView(entityNBT.getDirection());
                     boolean noGravity = entityNBT.nbt.getBoolean("NoGravity", false);
                     if(noGravity) {
                         entity.setNoGravity(true);
@@ -111,7 +111,7 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
         return entityDataList;
     }
 
-    public static class OpenEntity extends Entity{
+    public static class OpenEntity extends NoPhysicsEntity {
 
         public OpenEntity(EntityType entityType, UUID uuid) {
             super(entityType, uuid);

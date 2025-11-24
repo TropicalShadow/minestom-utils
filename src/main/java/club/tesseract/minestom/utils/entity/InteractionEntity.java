@@ -3,8 +3,8 @@ package club.tesseract.minestom.utils.entity;
 import club.tesseract.minestom.utils.math.position.BoundingBoxes;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.collision.BoundingBox;
+import net.minestom.server.coordinate.Area;
 import net.minestom.server.coordinate.Pos;
-import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventFilter;
@@ -17,17 +17,18 @@ import org.jetbrains.annotations.NotNull;
 public class InteractionEntity extends NoPhysicsEntity{
 
     private final EventNode<@NotNull PlayerEvent> PLAYER_MOVE_EVENT_NODE = EventNode.type("interaction-entity-player-move", EventFilter.PLAYER);
+    private final Area.Cuboid cuboidRegion;
 
-    public InteractionEntity(@NotNull BoundingBox boundingBox) {
+    public InteractionEntity(@NotNull Area.Cuboid cuboidRegion) {
         super(EntityType.INTERACTION);
-        super.setBoundingBox(boundingBox);
+        this.cuboidRegion = cuboidRegion;
     }
 
-    void onEnter(Player player) {
+    protected void onEnter(@NotNull Player player) {
         player.sendMessage("entered");
     }
 
-    void onExit(Player player) {
+    protected void onExit(@NotNull Player player) {
         player.sendMessage("exited");
     }
 
@@ -36,12 +37,17 @@ public class InteractionEntity extends NoPhysicsEntity{
         PLAYER_MOVE_EVENT_NODE.addListener(PlayerMoveEvent.class, event ->{
             Pos oldPos = event.getPlayer().getPosition();
             Pos newPos = event.getNewPosition();
-            ///  TODO - figure this shit out
-            BoundingBox boundingBox = this.getBoundingBox();
+            //  TODO - figure this shit out
+            Area.Cuboid boundingBox = this.cuboidRegion;
             BoundingBox playerBoundingBox = event.getPlayer().getBoundingBox();
 
-            boolean intersects = BoundingBoxes.touchesOrOverlaps(boundingBox, Vec.ZERO, playerBoundingBox, newPos);
-            boolean previouslyIntersected = BoundingBoxes.touchesOrOverlaps(boundingBox, Vec.ZERO, playerBoundingBox, oldPos);
+            Pos oldPosition = oldPos.sub(BoundingBoxes.getCenter(playerBoundingBox));
+            Pos newPosition = newPos.sub(BoundingBoxes.getCenter(playerBoundingBox));
+
+            Pos thisPosition = this.position.sub(BoundingBoxes.getCenter(boundingBox));
+
+            boolean intersects = BoundingBoxes.touchesOrOverlaps(boundingBox, thisPosition, playerBoundingBox, newPosition);
+            boolean previouslyIntersected = BoundingBoxes.touchesOrOverlaps(boundingBox, thisPosition, playerBoundingBox, oldPosition);
             if(intersects && !previouslyIntersected) {
                 this.onEnter(event.getPlayer());
             }

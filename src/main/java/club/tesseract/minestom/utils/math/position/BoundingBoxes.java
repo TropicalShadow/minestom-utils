@@ -1,6 +1,8 @@
 package club.tesseract.minestom.utils.math.position;
 
+import lombok.extern.slf4j.Slf4j;
 import net.minestom.server.collision.BoundingBox;
+import net.minestom.server.coordinate.Area;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Vec;
 
@@ -10,6 +12,7 @@ import net.minestom.server.coordinate.Vec;
  * @see BoundingBox
  * @since 0.0.1
  */
+@Slf4j
 public final class BoundingBoxes {
 
     private BoundingBoxes() {}
@@ -27,6 +30,36 @@ public final class BoundingBoxes {
         return new Vec(x, y, z);
     }
 
+    public static Vec getCenter(Area.Cuboid box) {
+        double x = box.min().x() + (box.max().x() - box.min().x()) / 2.0;
+        double y = box.min().y() + (box.max().y() - box.min().y()) / 2.0;
+        double z = box.min().z() + (box.max().z() - box.min().z()) / 2.0;
+        return new Vec(x, y, z);
+    }
+
+    public static boolean touchesOrOverlaps(Area.Cuboid a, Point aPos, BoundingBox b, Point bPos) {
+        final double eps = Vec.EPSILON / 2.0;
+
+        double aMinX = aPos.x() + a.min().x();
+        double aMaxX = aPos.x() + a.max().x();
+        double aMinY = aPos.y() + a.min().y();
+        double aMaxY = aPos.y() + a.max().y();
+        double aMinZ = aPos.z() + a.min().z();
+        double aMaxZ = aPos.z() + a.max().z();
+
+        double bMinX = bPos.x() + b.minX();
+        double bMaxX = bPos.x() + b.maxX();
+        double bMinY = bPos.y() + b.minY();
+        double bMaxY = bPos.y() + b.maxY();
+        double bMinZ = bPos.z() + b.minZ();
+        double bMaxZ = bPos.z() + b.maxZ();
+
+        boolean overlapX = aMinX <= bMaxX + eps && aMaxX >= bMinX - eps;
+        boolean overlapY = aMinY <= bMaxY + eps && aMaxY >= bMinY - eps;
+        boolean overlapZ = aMinZ <= bMaxZ + eps && aMaxZ >= bMinZ - eps;
+
+        return overlapX && overlapY && overlapZ;
+    }
 
     /**
      * Returns true if two axis-aligned bounding boxes touch or overlap in all three axes.

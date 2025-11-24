@@ -9,6 +9,7 @@ hikari = "7.0.2"
 h2database = "2.4.240"
 polar = "1.15.0"
 fastutil = "8.5.18"
+axiom = "0.0.2"
 
 
 [libraries]
@@ -24,3 +25,4 @@ hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 h2database = { module = "com.h2database:h2", version.ref = "h2database" }
 minestom-polar = { module = "dev.hollowcube:polar", version.ref = "polar" }
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
+minestom-axiom = { module = "fr.ghostrider584:axiom-minestom", version.ref = "axiom" }

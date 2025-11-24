@@ -9,6 +9,7 @@ version = System.getenv("TAG_VERSION")?: "dev"
 repositories {
     mavenCentral()
     maven("https://repo.hypera.dev/snapshots/") // luckperms (minestom)
+    maven("https://repo.smolder.cloud/public/")
 }
 
 dependencies {
@@ -28,6 +29,7 @@ dependencies {
     testImplementation(libs.logback)
     testImplementation(libs.minestom)
     testImplementation(libs.minestom.polar)
+    testImplementation(libs.minestom.axiom)
     testImplementation(libs.fastutil)
     testImplementation(libs.luckperms)
 
