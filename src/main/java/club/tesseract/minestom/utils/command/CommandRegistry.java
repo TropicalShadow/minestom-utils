@@ -22,7 +22,8 @@ public final class CommandRegistry {
                 new GameModeCommand(),
                 new FlyCommand(),
                 new HealCommand(),
-                new NukeCommand()
+                new NukeCommand(),
+                new PlaySoundCommand()
         );
     }
 
