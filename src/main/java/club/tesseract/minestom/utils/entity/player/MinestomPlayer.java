@@ -1,6 +1,6 @@
 package club.tesseract.minestom.utils.entity.player;
 
-import club.tesseract.minestom.utils.msic.PermissionHolder;
+import club.tesseract.minestom.utils.misc.PermissionHolder;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 import net.minestom.server.network.player.GameProfile;

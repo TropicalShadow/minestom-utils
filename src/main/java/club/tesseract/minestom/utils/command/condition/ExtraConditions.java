@@ -1,7 +1,7 @@
 package club.tesseract.minestom.utils.command.condition;
 
 
-import club.tesseract.minestom.utils.msic.PermissionHolder;
+import club.tesseract.minestom.utils.misc.PermissionHolder;
 import net.minestom.server.Auth;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.ConsoleSender;

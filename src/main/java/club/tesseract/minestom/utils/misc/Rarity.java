@@ -1,4 +1,4 @@
-package club.tesseract.minestom.utils.msic;
+package club.tesseract.minestom.utils.misc;
 
 
 
