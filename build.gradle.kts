@@ -4,12 +4,15 @@ plugins {
 }
 
 group = "club.tesseract.minestom"
-version = System.getenv("TAG_VERSION")?: "dev"
+version = System.getenv("TAG_VERSION") ?: "dev"
 
 repositories {
     mavenCentral()
-    maven("https://repo.hypera.dev/snapshots/") // luckperms (minestom)
+    maven("https://repo.hypera.dev/snapshots/") // luckperms (minestom) & Spark
     maven("https://repo.smolder.cloud/public/")
+
+    maven("https://repo.lucko.me/") // spark-common
+    maven("https://oss.sonatype.org/content/repositories/snapshots/") // spark-common's dependencies
 }
 
 dependencies {
@@ -26,12 +29,27 @@ dependencies {
     api(libs.sponge.configurate.hocon)
     /* End of Luckperms */
 
+    /* Spark */
+    api(libs.minestom.spark) {
+        exclude(group = "me.lucko", module = "bytesocks-java-client")
+    }
+    api(libs.bytesocks.java.client)
+    /* End of Spark */
+
     testImplementation(libs.logback)
     testImplementation(libs.minestom)
     testImplementation(libs.minestom.polar)
     testImplementation(libs.minestom.axiom)
     testImplementation(libs.fastutil)
     testImplementation(libs.luckperms)
+
+
+    /* Spark */
+    testImplementation(libs.minestom.spark){
+        exclude(group = "me.lucko", module = "bytesocks-java-client")
+    }
+    testImplementation(libs.bytesocks.java.client)
+    /* End of Spark */
 
     /* Luckperms */
     testImplementation(libs.luckperms)
@@ -42,7 +60,7 @@ dependencies {
     /* End of Luckperms */
 }
 
-java{
+java {
     withSourcesJar()
     withJavadocJar()
 
@@ -59,9 +77,9 @@ tasks {
     }
 }
 
-publishing{
+publishing {
 
-    repositories{
+    repositories {
         maven {
             name = "release"
             url = uri("https://repo.tesseract.club/releases")
@@ -72,19 +90,19 @@ publishing{
         }
     }
 
-    publications{
-        create<MavenPublication>("maven"){
+    publications {
+        create<MavenPublication>("maven") {
             groupId = group as String
             artifactId = rootProject.name
             version = project.version as String
             from(components["java"])
 
-            pom{
+            pom {
                 name.set(project.name)
                 description.set("")
                 url.set("https://github.com/TropicalShadow/minestom-utils")
 
-                developers{
+                developers {
                     developer {
                         id.set("tropicalshadow")
                         name.set("TropicalShadow")
@@ -92,12 +110,12 @@ publishing{
                     }
                 }
 
-                issueManagement{
+                issueManagement {
                     system.set("GitHub")
                     url.set("https://github.com/TropicalShadow/minestom-utils/issues")
                 }
 
-                scm{
+                scm {
                     connection.set("scm:git:git://github.com/TropicalShadow/minestom-utils.git")
                     developerConnection.set("scm:git:ssh://github.com/TropicalShadow/minestom-utils.git")
                     url.set("https://github.com/TropicalShadow/minestom-utils")
