@@ -21,7 +21,8 @@ public final class CommandRegistry {
                 new TeleportCommand(),
                 new GameModeCommand(),
                 new FlyCommand(),
-                new HealCommand()
+                new HealCommand(),
+                new NukeCommand()
         );
     }
 
