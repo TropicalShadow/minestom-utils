@@ -6,6 +6,7 @@ import club.tesseract.minestom.utils.entity.InteractionEntity;
 import club.tesseract.minestom.utils.entity.MarkerData;
 import club.tesseract.minestom.utils.entity.player.MinestomPlayer;
 import club.tesseract.minestom.utils.instance.dimension.FullBrightDimension;
+import club.tesseract.minestom.utils.metrics.SparkManager;
 import club.tesseract.minestom.utils.permission.LuckpermsPermission;
 import fr.ghostrider584.axiom.AxiomMinestom;
 import net.minestom.server.Auth;
@@ -55,7 +56,9 @@ public final class TestServer {
         MinecraftServer.getCommandManager().register(new DebugCommand());
 
         MinestomPlayer.register();
+        SparkManager spark = new SparkManager();
         MinecraftServer.getSchedulerManager().buildShutdownTask(perms::shutdown);
+        MinecraftServer.getSchedulerManager().buildShutdownTask(spark::shutdown);
         server.start("0.0.0.0", 25565);
     }
 
