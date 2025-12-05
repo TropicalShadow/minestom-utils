@@ -6,25 +6,38 @@ import net.minestom.server.coordinate.Vec;
 /**
  * A lightweight float-based quaternion class for Minestom rotation math.
  * Supports axis-angle, Euler angles, vector rotation, SLERP, and composition.
+ * <p>
+ * Component order: x, y, z, w (with w as the scalar part at the end).
  */
 public class Quaternion {
-    public float w, x, y, z;
+    public float x, y, z, w;
 
     /**
-     * Creates a quaternion with values (w, x, y, z).
+     * Creates a quaternion with values (x, y, z, w).
      */
-    public Quaternion(float w, float x, float y, float z) {
-        this.w = w;
+    public Quaternion(float x, float y, float z, float w) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.w = w;
     }
 
     /**
      * @return the identity quaternion (no rotation)
      */
     public static Quaternion identity() {
-        return new Quaternion(1f, 0f, 0f, 0f);
+        return new Quaternion(0f, 0f, 0f, 1f);
+    }
+
+    /**
+     * Create a quaternion from an array of floats {x, y, z, w}.
+     *
+     * @param array quaternion components x,y,z,w
+     * @return quaternion instance
+     */
+    public static Quaternion fromArray(float[] array) {
+        assert array.length == 4;
+        return new Quaternion(array[0], array[1], array[2], array[3]);
     }
 
     /**
@@ -40,10 +53,10 @@ public class Quaternion {
 
         Vec n = axis.normalize();
         return new Quaternion(
-                (float) Math.cos(half),
                 (float) (n.x() * sin),
                 (float) (n.y() * sin),
-                (float) (n.z() * sin)
+                (float) (n.z() * sin),
+                (float) Math.cos(half)
         );
     }
 
@@ -63,12 +76,13 @@ public class Quaternion {
         float cz = (float) Math.cos(roll / 2f);
         float sz = (float) Math.sin(roll / 2f);
 
-        return new Quaternion(
-                cx * cy * cz + sx * sy * sz,
-                sx * cy * cz - cx * sy * sz,
-                cx * sy * cz + sx * cy * sz,
-                cx * cy * sz - sx * sy * cz
-        );
+        // Original formulas computed as (w, x, y, z), we reorder to (x, y, z, w)
+        float w = cx * cy * cz + sx * sy * sz;
+        float x = sx * cy * cz - cx * sy * sz;
+        float y = cx * sy * cz + sx * cy * sz;
+        float z = cx * cy * sz - sx * sy * cz;
+
+        return new Quaternion(x, y, z, w);
     }
 
     /**
@@ -77,23 +91,23 @@ public class Quaternion {
      * @return normalized quaternion
      */
     public Quaternion normalize() {
-        float n = (float) Math.sqrt(w*w + x*x + y*y + z*z);
-        return new Quaternion(w/n, x/n, y/n, z/n);
+        float n = (float) Math.sqrt(x * x + y * y + z * z + w * w);
+        return new Quaternion(x / n, y / n, z / n, w / n);
     }
 
     /**
      * @return the conjugate of this quaternion
      */
     public Quaternion conjugate() {
-        return new Quaternion(w, -x, -y, -z);
+        return new Quaternion(-x, -y, -z, w);
     }
 
     /**
      * @return the inverse of this quaternion
      */
     public Quaternion inverse() {
-        float n = w*w + x*x + y*y + z*z;
-        return new Quaternion(w/n, -x/n, -y/n, -z/n);
+        float n = x * x + y * y + z * z + w * w;
+        return new Quaternion(-x / n, -y / n, -z / n, w / n);
     }
 
     /**
@@ -104,12 +118,12 @@ public class Quaternion {
      * @return composed quaternion
      */
     public Quaternion mul(Quaternion q) {
-        return new Quaternion(
-                w*q.w - x*q.x - y*q.y - z*q.z,
-                w*q.x + x*q.w + y*q.z - z*q.y,
-                w*q.y - x*q.z + y*q.w + z*q.x,
-                w*q.z + x*q.y - y*q.x + z*q.w
-        );
+        // This quaternion = (x, y, z, w), q = (qx, qy, qz, qw)
+        float nx = this.w * q.x + q.w * this.x + (this.y * q.z - this.z * q.y);
+        float ny = this.w * q.y + q.w * this.y + (this.z * q.x - this.x * q.z);
+        float nz = this.w * q.z + q.w * this.z + (this.x * q.y - this.y * q.x);
+        float nw = this.w * q.w - (this.x * q.x + this.y * q.y + this.z * q.z);
+        return new Quaternion(nx, ny, nz, nw);
     }
 
     /**
@@ -119,18 +133,18 @@ public class Quaternion {
      * @return rotated vector
      */
     public Vec rotate(Point v) {
-        Quaternion p = new Quaternion(0f, (float) v.x(), (float) v.y(), (float) v.z());
+        Quaternion p = new Quaternion((float) v.x(), (float) v.y(), (float) v.z(), 0f);
         Quaternion r = this.mul(p).mul(this.inverse());
         return new Vec(r.x, r.y, r.z);
     }
 
     /**
-     * Converts this quaternion into a float array {w, x, y, z}.
+     * Converts this quaternion into a float array {x, y, z, w}.
      *
      * @return float array representation of this quaternion
      */
     public float[] getArray() {
-        return new float[]{w, x, y, z};
+        return new float[]{x, y, z, w};
     }
 
     /**
@@ -142,38 +156,38 @@ public class Quaternion {
      * @return interpolated quaternion
      */
     public static Quaternion slerp(Quaternion a, Quaternion b, float t) {
-        float dot = a.w*b.w + a.x*b.x + a.y*b.y + a.z*b.z;
+        float dot = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 
         if (dot < 0f) {
-            b = new Quaternion(-b.w, -b.x, -b.y, -b.z);
+            b = new Quaternion(-b.x, -b.y, -b.z, -b.w);
             dot = -dot;
         }
 
         if (dot > 0.9995f) {
             return new Quaternion(
-                    a.w + t*(b.w - a.w),
-                    a.x + t*(b.x - a.x),
-                    a.y + t*(b.y - a.y),
-                    a.z + t*(b.z - a.z)
+                    a.x + t * (b.x - a.x),
+                    a.y + t * (b.y - a.y),
+                    a.z + t * (b.z - a.z),
+                    a.w + t * (b.w - a.w)
             ).normalize();
         }
 
         float theta = (float) Math.acos(dot);
         float sin = (float) Math.sin(theta);
 
-        float s1 = (float) Math.sin((1f - t)*theta) / sin;
-        float s2 = (float) Math.sin(t*theta) / sin;
+        float s1 = (float) Math.sin((1f - t) * theta) / sin;
+        float s2 = (float) Math.sin(t * theta) / sin;
 
         return new Quaternion(
-                a.w*s1 + b.w*s2,
-                a.x*s1 + b.x*s2,
-                a.y*s1 + b.y*s2,
-                a.z*s1 + b.z*s2
+                a.x * s1 + b.x * s2,
+                a.y * s1 + b.y * s2,
+                a.z * s1 + b.z * s2,
+                a.w * s1 + b.w * s2
         );
     }
 
     @Override
     public String toString() {
-        return "Quaternion[" + w + ", " + x + ", " + y + ", " + z + "]";
+        return "Quaternion[" + x + ", " + y + ", " + z + ", " + w + "]";
     }
 }
