@@ -1,6 +1,8 @@
 package club.tesseract.minestom.utils.instance.polar;
 
+import club.tesseract.minestom.utils.entity.EntityData;
 import club.tesseract.minestom.utils.entity.NoPhysicsEntity;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.hollowcube.polar.PolarWorldAccess;
 import net.kyori.adventure.key.Key;
@@ -34,6 +36,17 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
 
     private static final byte CURRENT_FEATURE_VERSION = 2;
     private final List<EntityData> entities = new ArrayList<>();
+    @Setter
+    private EntityCreator entityCreator;
+
+    public PolarPaperWorldAccess(EntityCreator entityCreator) {
+        this.entityCreator = entityCreator;
+    }
+
+    public PolarPaperWorldAccess() {
+        this(new BasicEntityCreator());
+    }
+
 
     @Override
     public void loadChunkData(@NotNull Chunk chunk, @Nullable NetworkBuffer userData) {
@@ -42,11 +55,27 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
         if(FEATURE_VERSION != CURRENT_FEATURE_VERSION){
             log.warn("Polar Paper World Access: Unsupported feature version: {}", FEATURE_VERSION);
         }
-        entities.addAll(readEntities(chunk.getInstance(), userData));
+        entities.addAll(readEntities(userData));
+
+        final Instance instance = chunk.getInstance();
+        if(instance.isRegistered()){
+            instance.scheduleNextTick(this::registerEntities);
+            return;
+        }
+        instance.eventNode().addListener(InstanceRegisterEvent.class, event -> {
+            event.getInstance().scheduleNextTick(this::registerEntities);
+        });
+
     }
 
+    void registerEntities(@NotNull Instance instance){
+        for(EntityData data : entities){
+            entityCreator.apply(instance, data);
+        }
+        entities.clear();
+    }
 
-    List<EntityData> readEntities(Instance instance, NetworkBuffer userData){
+    List<EntityData> readEntities(NetworkBuffer userData){
         int entities = userData.read(NetworkBuffer.VAR_INT);
         if(entities == 0) return List.of();
         log.debug("Polar Paper World Access: {} entities", entities);
@@ -61,49 +90,6 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
                 byte[] data = userData.read(NetworkBuffer.BYTE_ARRAY);
                 EntityData entityData = new EntityData(x, y, z, yaw, pitch, data);
                 entityDataList.add(entityData);
-                try {
-                    EntityNBT entityNBT = entityData.getEntityNBTObject();
-                    EntityType entityType = entityNBT.getEntityType();
-                    if(entityType == null) continue;
-                    UUID uniqueId = entityNBT.getUniqueId().orElse(UUID.randomUUID());
-                    OpenEntity entity = new OpenEntity(entityType, uniqueId);
-                    Pos location = entityNBT.getVec().withView(entityNBT.getDirection());
-                    boolean noGravity = entityNBT.nbt.getBoolean("NoGravity", false);
-                    if(noGravity) {
-                        entity.setNoGravity(true);
-                    }
-                    entityNBT.getCustomName().ifPresent(customName -> entity.set(DataComponents.CUSTOM_NAME, customName));
-                    boolean customNameVisible = entityNBT.CustomNameVisible();
-                    entity.setCustomNameVisible(customNameVisible);
-
-
-                    if(entityType == EntityType.MARKER && entityNBT.nbt().contains("data")){
-                        entity.set(DataComponents.CUSTOM_DATA, new CustomData(entityNBT.nbt().getCompound("data")));
-                    }
-
-                    {
-                        Map<String, MetadataDef.Entry<?>> metadataEntryMap = getMetadataEntryMap();
-                        entityNBT.nbt().keySet().forEach(key -> {
-                            String upperKey = key.toLowerCase(Locale.ROOT);
-                            MetadataDef.Entry<?> entry = metadataEntryMap.get(upperKey);
-                            if(entry == null)return;
-
-                        });
-                    }
-
-                    if(instance.isRegistered()) {
-                        entity.setInstance(instance, location);
-                    }else{
-                        instance.eventNode().addListener(InstanceRegisterEvent.class, event -> {
-                            entity.setInstance(event.getInstance(), location);
-                        });
-                    }
-                    entityNBT.nbt.keySet().forEach(key -> {
-                        log.debug("Polar Paper World Access: Entity NBT: {} = {}", key, entityNBT.nbt.get(key));
-                    });
-                } catch (IOException ex) {
-                    log.warn("Polar Paper World Access: Failed to read entity NBT", ex);
-                }
             }catch(Exception ex){
                 log.warn("Polar Paper World Access: Failed to read entity", ex);
             }
@@ -111,89 +97,4 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
         return entityDataList;
     }
 
-    public static class OpenEntity extends NoPhysicsEntity {
-
-        public OpenEntity(EntityType entityType, UUID uuid) {
-            super(entityType, uuid);
-
-        }
-
-        public <T> void setEntry(MetadataDef.Entry<@NotNull T> entry, T value){
-            this.metadata.set(entry, value);
-        }
-
-    }
-
-    static Map<String, MetadataDef.Entry<?>> getMetadataEntryMap(){
-        Class<?>[] classes = MetadataDef.class.getDeclaredClasses();
-        Map<String, MetadataDef.Entry<?>> map = new HashMap<>();
-        for (Class<?> aClass : classes) {
-            Field[] fields = aClass.getDeclaredFields();
-            for (Field field : fields) {
-                try {
-                    MetadataDef.Entry<?> entry = (MetadataDef.Entry<?>) field.get(null);
-                    map.put(field.getName(), entry);
-                }catch (IllegalAccessException e){
-                    log.warn("Failed to access metadata entry {}", field.getName());
-                }
-            }
-        }
-        return map;
-    }
-
-
-
-    record EntityNBT(CompoundBinaryTag nbt){
-
-        Optional<UUID> getUniqueId(){
-            BinaryTag tag = nbt.get("uuid");
-            if(!(tag instanceof IntArrayBinaryTag intArrayBinaryTag)) return Optional.empty();
-            return Optional.of(UUIDUtils.fromNbt(intArrayBinaryTag));
-        }
-
-        Optional<Component> getCustomName(){
-            BinaryTag input = nbt.get("CustomName");
-            if(input == null) return Optional.empty();
-            final Transcoder<@NotNull BinaryTag> coder = new RegistryTranscoder<>(Transcoder.NBT, MinecraftServer.process());
-            return Optional.ofNullable(Codec.COMPONENT.decode(coder, input).orElse(null));
-        }
-
-        boolean CustomNameVisible(){
-            return nbt.getBoolean("CustomNameVisible", false);
-        }
-
-        EntityType getEntityType(){
-            return EntityType.fromKey(Key.key(nbt.getString("id", EntityType.SMALL_FIREBALL.key().asString())));
-        }
-
-        Pos getVec(){
-            ListBinaryTag tagList = nbt.getList("Pos", BinaryTagTypes.DOUBLE);
-            double x = tagList.getDouble(0);
-            double y = tagList.getDouble(1);
-            double z = tagList.getDouble(2);
-            return new Pos(x, y, z);
-        }
-
-        Pos getDirection(){
-            ListBinaryTag tagList = nbt.getList("Rotation", BinaryTagTypes.FLOAT);
-            Pos pos = Pos.ZERO;
-            pos = pos.withYaw(tagList.getFloat(0));
-            pos = pos.withPitch(tagList.getFloat(1));
-            return pos;
-        }
-
-    }
-
-    record EntityData(double x, double y, double z, float yaw, float pitch, byte[] data){
-
-        public CompoundBinaryTag getEntityNBT() throws IOException {
-            if(data.length == 0) return CompoundBinaryTag.empty();
-            return BinaryTagIO.unlimitedReader().read(new ByteArrayInputStream(data));
-        }
-
-        public EntityNBT getEntityNBTObject() throws IOException {
-            return new EntityNBT(getEntityNBT());
-        }
-
-    }
 }

@@ -35,8 +35,9 @@ public class InteractionEntity extends NoPhysicsEntity{
     @Override
     public void spawn() {
         PLAYER_MOVE_EVENT_NODE.addListener(PlayerMoveEvent.class, event ->{
-            Pos oldPos = event.getPlayer().getPosition();
+            Pos oldPos = event.getPlayer().getPreviousPosition();
             Pos newPos = event.getNewPosition();
+            if(oldPos.samePoint(newPos))return;
             //  TODO - figure this shit out
             Area.Cuboid boundingBox = this.cuboidRegion;
             BoundingBox playerBoundingBox = event.getPlayer().getBoundingBox();
