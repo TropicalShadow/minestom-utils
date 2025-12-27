@@ -68,12 +68,7 @@ public class NukeTNT extends LivingEntity {
             Instance instance = MinecraftServer.getInstanceManager().getInstance(instanceId);
             if (instance == null) return TaskSchedule.stop();
             AbsoluteBlockBatch blockBatch = explodeRadius(nukeCenter, 50);
-            CompletableFuture<Void> future = new CompletableFuture<>();
-            AbsoluteBlockBatch inverse = blockBatch.apply(instance, () -> {
-                future.complete(null);
-            });
-
-            future.thenRun(() -> {
+            blockBatch.apply(instance, (inverse) -> {
                 if (replace) {
                     MinecraftServer.getSchedulerManager().scheduleTask(() -> {
                         Instance refetchInstance = MinecraftServer.getInstanceManager().getInstance(instanceId);
@@ -83,6 +78,7 @@ public class NukeTNT extends LivingEntity {
                     }, TaskSchedule.tick(40));
                 }
             });
+
             return TaskSchedule.stop();
         }, TaskSchedule.tick(subFuse));
 

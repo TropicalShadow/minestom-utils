@@ -25,7 +25,7 @@ public final class FullBrightDimension {
 
 
     private FullBrightDimension() {
-        type = DimensionType.builder().ambientLight(1.0f).hasSkylight(true).build();
+        type = DimensionType.builder().ambientLight(1.0f).skylight(true).build();
         registryKeyDimension = MinecraftServer.getDimensionTypeRegistry().register(getKey(), type);
     }
 
