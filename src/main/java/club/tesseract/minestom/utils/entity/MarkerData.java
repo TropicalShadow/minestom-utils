@@ -1,5 +1,6 @@
 package club.tesseract.minestom.utils.entity;
 
+import club.tesseract.minestom.utils.instance.polar.EntityNBT;
 import net.kyori.adventure.nbt.BinaryTagTypes;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.nbt.ListBinaryTag;
@@ -42,10 +43,19 @@ public record MarkerData(UUID uuid, Pos position, @Nullable String name, @Nullab
         }
     }
 
+    public static MarkerData createFrom(EntityNBT entityNBT) {
+        Pos position = entityNBT.getPosition();
+        CompoundBinaryTag data = entityNBT.customData().nbt();
+        return MarkerData.createFrom(position, data);
+    }
+
     public static MarkerData createFrom(Entity marker) {
         Pos position = marker.getPosition();
         CompoundBinaryTag data = MarkerData.getData(marker);
+        return MarkerData.createFrom(position, data);
+    }
 
+    public static MarkerData createFrom(Pos position, CompoundBinaryTag data) {
         String name = data.getString("name").trim();
         if (name.isEmpty()) name = null;
 
@@ -56,56 +66,29 @@ public record MarkerData(UUID uuid, Pos position, @Nullable String name, @Nullab
         int faceArgb = 0;
 
         if (data.contains("min") && data.contains("max")) {
-            // Try to load min/max as absolute coordinates
-            ListBinaryTag min = data.getList("min", BinaryTagTypes.DOUBLE);
+            ListBinaryTag min = data.getList("min", BinaryTagTypes.STRING);
+            // TODO - this shit contains ~, account for it or you're fucked
             if (min.size() == 3) {
-                double minX = min.getDouble(0, 0.0);
-                double minY = min.getDouble(1, 0.0);
-                double minZ = min.getDouble(2, 0.0);
+                double minX = calculateCoordinate(min.getString(0), position.x());
+                double minY = calculateCoordinate(min.getString(1), position.y());
+                double minZ = calculateCoordinate(min.getString(2), position.z());
                 minRegion = new Vec(minX, minY, minZ);
             }
 
-            ListBinaryTag max = data.getList("max", BinaryTagTypes.DOUBLE);
+            ListBinaryTag max = data.getList("max", BinaryTagTypes.STRING);
             if (max.size() == 3) {
-                double maxX = max.getDouble(0, 0.0);
-                double maxY = max.getDouble(1, 0.0);
-                double maxZ = max.getDouble(2, 0.0);
+                double maxX = calculateCoordinate(max.getString(0), position.x());
+                double maxY = calculateCoordinate(max.getString(1), position.y());
+                double maxZ = calculateCoordinate(max.getString(2), position.z());
                 maxRegion = new Vec(maxX, maxY, maxZ);
             }
 
-            if (minRegion == null) {
-                // Try to load min as string coordinates
-                min = data.getList("min", BinaryTagTypes.STRING);
-                if (min.size() == 3) {
-                    double minX = calculateCoordinate(min.getString(0, ""), position.x());
-                    double minY = calculateCoordinate(min.getString(1, ""), position.y());
-                    double minZ = calculateCoordinate(min.getString(2, ""), position.z());
-                    if (Double.isFinite(minX) && Double.isFinite(minY) && Double.isFinite(minZ)) {
-                        minRegion = new Vec(minX, minY, minZ);
-                    }
-                }
-            }
-            if (maxRegion == null) {
-                // Try to load max as string coordinates
-                max = data.getList("max", BinaryTagTypes.STRING);
-                if (max.size() == 3) {
-                    double maxX = calculateCoordinate(max.getString(0, ""), position.x());
-                    double maxY = calculateCoordinate(max.getString(1, ""), position.y());
-                    double maxZ = calculateCoordinate(max.getString(2, ""), position.z());
-                    if (Double.isFinite(maxX) && Double.isFinite(maxY) && Double.isFinite(maxZ)) {
-                        maxRegion = new Vec(maxX, maxY, maxZ);
-                    }
-                }
-            }
-
-            if (minRegion != null && maxRegion != null) {
-                lineArgb = data.getInt("line_argb", 0);
-                lineThickness = data.getInt("line_thickness", 0);
-                faceArgb = data.getInt("face_argb", 0);
-            }
+            lineArgb = data.getInt("line_argb", 0);
+            lineThickness = data.getInt("line_thickness", 0);
+            faceArgb = data.getInt("face_argb", 0);
         }
 
-        return new MarkerData(marker.getUuid(), position, name, minRegion, maxRegion, lineArgb, lineThickness, faceArgb);
+        return new MarkerData(UUID.randomUUID(), position, name, minRegion, maxRegion, lineArgb, lineThickness, faceArgb);
     }
 
     private static double calculateCoordinate(String coordinate, double position) {

@@ -58,7 +58,7 @@ public class TeleportCommand extends Command {
 
             for (Entity entity : targets) {
                 if (entity.getInstance() != destination.getInstance()) {
-                    sender.sendMessage(Component.translatable("commands.teleport.invalidPosition", NamedTextColor.RED));
+                    entity.setInstance(destination.getInstance(),       destination.getPosition());
                     return;
                 }
                 entity.teleport(destination.getPosition());
