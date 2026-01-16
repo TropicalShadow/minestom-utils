@@ -1,6 +1,6 @@
 package club.tesseract.minestom.utils.entity.custom;
 
-import club.tesseract.minestom.utils.entity.ai.EntityTargetSelector;
+import club.tesseract.minestom.utils.entity.ai.target.EntityTargetSelector;
 import net.minestom.server.entity.EntityCreature;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.Player;

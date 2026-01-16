@@ -1,4 +1,4 @@
-package club.tesseract.minestom.utils.entity.ai;
+package club.tesseract.minestom.utils.entity.ai.target;
 
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityCreature;
