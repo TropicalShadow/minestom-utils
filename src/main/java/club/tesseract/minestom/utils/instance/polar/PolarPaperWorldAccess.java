@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 
 
 @Slf4j
@@ -55,24 +56,25 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
         if(FEATURE_VERSION != CURRENT_FEATURE_VERSION){
             log.warn("Polar Paper World Access: Unsupported feature version: {}", FEATURE_VERSION);
         }
-        entities.addAll(readEntities(userData));
 
+        List<EntityData> entities = readEntities(userData);
         final Instance instance = chunk.getInstance();
         if(instance.isRegistered()){
-            instance.scheduleNextTick(this::registerEntities);
+            instance.scheduleNextTick(registerEntities(entities));
             return;
         }
         instance.eventNode().addListener(InstanceRegisterEvent.class, event -> {
-            event.getInstance().scheduleNextTick(this::registerEntities);
+            event.getInstance().scheduleNextTick(registerEntities(entities));
         });
-
     }
 
-    void registerEntities(@NotNull Instance instance){
-        for(EntityData data : entities){
-            entityCreator.apply(instance, data);
-        }
-        entities.clear();
+    Consumer<Instance> registerEntities(List<EntityData> entities){
+        return instance -> {
+            for(EntityData data : entities){
+                entityCreator.apply(instance, data);
+            }
+            this.entities.addAll(entities);
+        };
     }
 
     List<EntityData> readEntities(NetworkBuffer userData){
