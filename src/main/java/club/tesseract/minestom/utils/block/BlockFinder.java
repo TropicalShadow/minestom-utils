@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,7 +32,7 @@ public final class BlockFinder {
      */
     public static Block fromColour(TextColor colour, Block defaultBlock){
         final NamedTextColor namedColour = NamedTextColor.nearestTo(colour);
-        final @Subst("white") Colour changedColour = Colour.fromNamedTextColor(namedColour);
+        final @Subst("white") Colour changedColour = Colour.fromOrDefault(namedColour, Colour.BLACK);
         if(changedColour == null){
             return defaultBlock;
         }
@@ -49,7 +49,6 @@ public final class BlockFinder {
         Matcher matcher = BLOCK_REGEX.matcher(blockName);
         boolean success = matcher.find();
         if(success){
-            String colourName = matcher.group(1);
             String blockType = matcher.group(2);
             return Block.fromKey(Key.key("minecraft", colour.key + "_" + blockType));
         }
@@ -58,22 +57,54 @@ public final class BlockFinder {
 
     @Getter
     public enum Colour{
-        WHITE(0, "white"),
-        ORANGE(1, "orange"),
-        MAGENTA(2, "magenta"),
-        LIGHT_BLUE(3, "light_blue"),
-        YELLOW(4, "yellow"),
-        LIME(5, "lime"),
-        PINK(6, "pink"),
-        GRAY(7, "gray"),
-        LIGHT_GRAY(8, "light_gray"),
-        CYAN(9, "cyan"),
-        PURPLE(10, "purple"),
-        BLUE(11, "blue"),
-        BROWN(12, "brown"),
-        GREEN(13, "green"),
-        RED(14, "red"),
+        BLACK(0, "black"),
+        WHITE(1, "white"),
+        ORANGE(2, "orange"),
+        MAGENTA(3, "magenta"),
+        LIGHT_BLUE(4, "light_blue"),
+        YELLOW(5, "yellow"),
+        LIME(6, "lime"),
+        PINK(7, "pink"),
+        GRAY(8, "gray"),
+        LIGHT_GRAY(9, "light_gray"),
+        CYAN(10, "cyan"),
+        PURPLE(11, "purple"),
+        BLUE(12, "blue"),
+        BROWN(13, "brown"),
+        GREEN(14, "green"),
+        RED(15, "red"),
         ;
+        private static final Map<NamedTextColor, Colour> FROM_NAMED;
+
+        static {
+            Map<NamedTextColor, Colour> map = new IdentityHashMap<>();
+
+            map.put(NamedTextColor.BLACK, BLACK);
+            map.put(NamedTextColor.WHITE, WHITE);
+
+            map.put(NamedTextColor.GOLD, ORANGE);
+            map.put(NamedTextColor.YELLOW, YELLOW);
+
+            map.put(NamedTextColor.LIGHT_PURPLE, MAGENTA);
+            map.put(NamedTextColor.DARK_PURPLE, PURPLE);
+
+            map.put(NamedTextColor.BLUE, BLUE);
+            map.put(NamedTextColor.DARK_BLUE, BLUE);
+
+            map.put(NamedTextColor.AQUA, CYAN);
+            map.put(NamedTextColor.DARK_AQUA, CYAN);
+
+            map.put(NamedTextColor.GREEN, LIME);
+            map.put(NamedTextColor.DARK_GREEN, GREEN);
+
+            map.put(NamedTextColor.RED, RED);
+            map.put(NamedTextColor.DARK_RED, RED);
+
+            map.put(NamedTextColor.GRAY, LIGHT_GRAY);
+            map.put(NamedTextColor.DARK_GRAY, GRAY);
+
+            FROM_NAMED = Collections.unmodifiableMap(map);
+        }
 
         private final int id;
         private final String key;
@@ -93,14 +124,12 @@ public final class BlockFinder {
             return null;
         }
 
-        public static @Nullable Colour fromNamedTextColor(NamedTextColor namedTextColor){
-            String name = NamedTextColor.NAMES.key(namedTextColor);
-            for (Colour value : values()) {
-                if(value.key.equals(name)){
-                    return value;
-                }
-            }
-            return null;
+        public static Optional<Colour> from(NamedTextColor color) {
+            return Optional.ofNullable(FROM_NAMED.get(color));
+        }
+
+        public static Colour fromOrDefault(NamedTextColor color, Colour fallback) {
+            return FROM_NAMED.getOrDefault(color, fallback);
         }
 
 
