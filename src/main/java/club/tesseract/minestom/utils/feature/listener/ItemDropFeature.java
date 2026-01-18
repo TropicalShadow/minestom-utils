@@ -3,8 +3,11 @@ package club.tesseract.minestom.utils.feature.listener;
 
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.ItemEntity;
+import net.minestom.server.event.Event;
 import net.minestom.server.event.EventListener;
+import net.minestom.server.event.EventNode;
 import net.minestom.server.event.item.ItemDropEvent;
+import net.minestom.server.event.trait.InstanceEvent;
 import net.minestom.server.utils.time.TimeUnit;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +15,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 
-public record ItemDropFeature() implements EventListener<ItemDropEvent> {
+public record ItemDropFeature() implements EventListener<ItemDropEvent>, ListenerFeature {
 
     private static final Duration ITEM_DECAY_DURATION = Duration.of(5, ChronoUnit.MINUTES);
 
@@ -30,5 +33,27 @@ public record ItemDropFeature() implements EventListener<ItemDropEvent> {
         entity.setVelocity(playerPosition.direction().mul(6.0D));
         entity.scheduleRemove(ITEM_DECAY_DURATION);
         return EventListener.Result.SUCCESS;
+    }
+
+    @Override
+    public void onEventRegistration(EventNode<? extends Event> eventNode) {
+        if(eventNode instanceof EventNode<InstanceEvent> instanceEvent){
+            eventNode.addListener(this);
+        }
+    }
+
+    @Override
+    public void onEventDeregistration(EventNode<Event> eventNode) {
+        eventNode.removeListener(this);
+    }
+
+    @Override
+    public void onEnable() {
+        //no-op
+    }
+
+    @Override
+    public void onDisable() {
+        //no-op
     }
 }

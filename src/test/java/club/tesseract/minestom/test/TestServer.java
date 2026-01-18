@@ -20,8 +20,8 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.event.instance.AddEntityToInstanceEvent;
 import net.minestom.server.event.instance.InstanceRegisterEvent;
+import net.minestom.server.event.instance.InstanceUnregisterEvent;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
-import net.minestom.server.instance.InstanceContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ public final class TestServer {
         AxiomMinestom.initialize();
         LuckpermsPermission perms = new LuckpermsPermission();
 
-        InstanceContainer container = new DummyInstance();
+        DummyInstance container = new DummyInstance();
         MinecraftServer.getGlobalEventHandler().addListener(AsyncPlayerConfigurationEvent.class, event -> {
             event.getPlayer().setRespawnPoint(new Pos(0, 70, 0));
             event.setSpawningInstance(container);
@@ -52,6 +52,10 @@ public final class TestServer {
                 log.info("Marker {} created", data.name());
                 data.createDisplay(event.getInstance());
             });
+        }).addListener(InstanceRegisterEvent.class, event -> {
+            container.onEnable();
+        }).addListener(InstanceUnregisterEvent.class, event ->{
+            container.onDisable();
         });
 
 
