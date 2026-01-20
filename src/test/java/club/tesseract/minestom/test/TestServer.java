@@ -70,6 +70,7 @@ public final class TestServer {
         MinecraftServer.getInstanceManager().registerInstance(container);
 
         MinecraftServer.getCommandManager().register(new DebugCommand());
+        MinecraftServer.getCommandManager().register(new ParticleCreatorCommand());
 
         MinestomPlayer.register();
         SparkManager spark = new SparkManager();
