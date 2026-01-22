@@ -31,7 +31,7 @@ public class GiveItemCommand extends Command {
     public GiveItemCommand() {
         super("give");
 
-        setCondition(ExtraConditions.hasPermission("zm.command.give"));
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.give"));
 
         setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /give <targets> <item> [count]"));
 

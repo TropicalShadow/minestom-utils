@@ -14,7 +14,7 @@ public class FlyCommand extends Command {
     public FlyCommand() {
         super("fly");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.fly"));
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.fly"));
 
         setDefaultExecutor((sender, context) ->{
             if(!(sender instanceof Player player)) {

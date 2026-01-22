@@ -21,7 +21,7 @@ public class StatsCommand extends Command {
     public StatsCommand() {
         super("stats");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.stats"));
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.stats"));
 
         addSubcommand(new InstanceStatsCommand());
         addSubcommand(new PlayerStatsCommand());

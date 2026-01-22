@@ -1,5 +1,6 @@
 package club.tesseract.minestom.utils.command;
 
+import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import com.sun.management.GarbageCollectorMXBean;
 import com.sun.management.GcInfo;
 
@@ -39,6 +40,7 @@ public class TpsCommand extends Command {
     public TpsCommand() {
         super("tps", "tickrate");
 
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.tps"));
 
         MinecraftServer.getGlobalEventHandler().addListener(ServerTickMonitorEvent.class, event ->{
             LAST_TICK.set(event.getTickMonitor());

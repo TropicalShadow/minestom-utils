@@ -13,7 +13,7 @@ public class HealCommand extends Command {
     public HealCommand() {
         super("heal");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.heal"));
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.heal"));
 
         setDefaultExecutor((sender, context) ->{
             if(!(sender instanceof Player player)){

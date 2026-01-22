@@ -1,6 +1,7 @@
 package club.tesseract.minestom.utils.command;
 
 import club.tesseract.minestom.utils.command.args.GenericArguments;
+import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
@@ -18,6 +19,8 @@ public final class SudoCommand extends Command {
 
     public SudoCommand() {
         super("sudo");
+
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.sudo"));
 
         setDefaultExecutor((sender, context) -> sender.sendMessage("Usage: /sudo <player> <command>"));
 

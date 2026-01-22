@@ -13,7 +13,7 @@ public class StopCommand extends Command {
     public StopCommand() {
         super("stop");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.stop"));
+        setCondition(ExtraConditions.hasPermission("gamesdk.command.stop"));
 
         setDefaultExecutor((sender, context) -> {
             if(sender instanceof Player player){
