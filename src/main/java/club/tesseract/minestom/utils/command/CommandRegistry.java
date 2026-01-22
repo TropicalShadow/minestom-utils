@@ -23,7 +23,8 @@ public final class CommandRegistry {
                 new FlyCommand(),
                 new HealCommand(),
                 new NukeCommand(),
-                new PlaySoundCommand()
+                new PlaySoundCommand(),
+                new GiveItemCommand()
         );
     }
 
