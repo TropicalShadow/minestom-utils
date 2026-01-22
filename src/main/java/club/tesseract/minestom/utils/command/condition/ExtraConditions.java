@@ -26,6 +26,17 @@ public final class ExtraConditions {
         };
     }
 
+    public static @NotNull CommandCondition or(@NotNull CommandCondition... conditions) {
+        return (sender, commandName) -> {
+            for (CommandCondition condition : conditions) {
+                if (condition.canUse(sender, commandName)) {
+                    return true; // If any condition passes, the combined condition passes
+                }
+            }
+            return false; // All conditions failed
+        };
+    }
+
 
     public static @NotNull CommandCondition isPlayer() {
         return (sender, commandName) -> {
@@ -47,14 +58,22 @@ public final class ExtraConditions {
             if (permHolder.hasPermission(permission).asBoolean()) {
                 return true;
             }
-            Auth auth = MinecraftServer.process().auth();
-            if((auth instanceof Auth.Velocity || auth instanceof Auth.Online)){
-                if(sender instanceof Player player){
-                    return player.getUsername().equals("TropicalShadow") || player.getUsername().equals("BridgeSplash");
-                }
+
+            return isTropical().canUse(sender, commandName);
+        };
+    }
+
+    public static @NotNull CommandCondition isOp() {
+        return (sender, commandName) -> {
+            if (sender instanceof ConsoleSender) {
+                return true; // Console is considered as op
             }
 
-            return false;
+            if(!(sender instanceof Player player)){
+                return false;
+            }
+
+            return player.getPermissionLevel() >= 4;
         };
     }
 
@@ -64,8 +83,11 @@ public final class ExtraConditions {
                 return true; // Console can execute this command
             }
 
-            if (sender instanceof Player player) {
-                return player.getUsername().equals("TropicalShadow") || player.getUsername().equals("BridgeSplash");
+            Auth auth = MinecraftServer.process().auth();
+            if((auth instanceof Auth.Velocity || auth instanceof Auth.Online)){
+                if(sender instanceof Player player){
+                    return player.getUsername().equals("TropicalShadow") || player.getUsername().equals("BridgeSplash");
+                }
             }
             return false; // Non-player entities cannot execute this command
         };
