@@ -20,7 +20,7 @@ public class TeleportCommand extends Command {
     public TeleportCommand() {
         super("teleport", "tp");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.command.teleport"));
+        setCondition(ExtraConditions.hasPermission("minecraft.command.tp"));
 
         setDefaultExecutor((sender, context) -> {
             sender.sendMessage("Usage: /teleport <player> [player]");
