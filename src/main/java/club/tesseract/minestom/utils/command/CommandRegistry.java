@@ -24,7 +24,8 @@ public final class CommandRegistry {
                 new HealCommand(),
                 new NukeCommand(),
                 new PlaySoundCommand(),
-                new GiveItemCommand()
+                new GiveItemCommand(),
+                new ClearItemCommand()
         );
     }
 
