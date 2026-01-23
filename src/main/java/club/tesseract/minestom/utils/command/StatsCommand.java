@@ -17,6 +17,10 @@ import net.minestom.server.network.ConnectionManager;
 import java.util.Optional;
 import java.util.UUID;
 
+@CommandMetadata(
+        categories = {CommandCategory.SERVER, CommandCategory.ADMIN},
+        description = "Displays stats about the server"
+)
 public class StatsCommand extends Command {
     public StatsCommand() {
         super("stats");

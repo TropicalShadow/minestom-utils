@@ -1,5 +1,7 @@
 package club.tesseract.minestom.utils.command.vanilla;
 
+import club.tesseract.minestom.utils.command.CommandCategory;
+import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.ArgumentSound;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
@@ -14,6 +16,10 @@ import net.minestom.server.utils.entity.EntityFinder;
 
 import java.util.List;
 
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN, CommandCategory.GENERIC, CommandCategory.VANILLA},
+        description = "Plays a sound to a player or players"
+)
 public class PlaySoundCommand extends Command {
 
     public static final ArgumentSound SOUND_ARGUMENT = new ArgumentSound("sound");

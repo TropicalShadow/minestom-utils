@@ -1,5 +1,7 @@
 package club.tesseract.minestom.utils.command.vanilla;
 
+import club.tesseract.minestom.utils.command.CommandCategory;
+import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -21,6 +23,10 @@ import net.kyori.adventure.text.Component;
 import java.util.Collection;
 import java.util.List;
 
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN, CommandCategory.GENERIC, CommandCategory.VANILLA},
+        description = "Spawns particles at a location"
+)
 public class ParticleCommand extends Command {
 
     private static final ArgumentParticle PARTICLE_ARGUMENT = ArgumentType.Particle("particle");

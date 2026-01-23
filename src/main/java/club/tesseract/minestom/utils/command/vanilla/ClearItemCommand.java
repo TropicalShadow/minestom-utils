@@ -1,5 +1,7 @@
 package club.tesseract.minestom.utils.command.vanilla;
 
+import club.tesseract.minestom.utils.command.CommandCategory;
+import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
@@ -27,6 +29,10 @@ import java.util.function.Predicate;
  * @author TropicalShadow
  * @implNote ItemStack Predicates are not how they are in vanilla and require an exact match
  */
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN, CommandCategory.PLAYER, CommandCategory.VANILLA},
+        description = "Clears inventory of players"
+)
 public final class ClearItemCommand extends Command {
 
     private static final Function<String, Component> ERROR_SINGLE = (name) -> Component.translatable("clear.failed.single", NamedTextColor.RED).arguments(Component.text(name));

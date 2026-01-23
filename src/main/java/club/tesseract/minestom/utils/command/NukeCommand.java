@@ -14,6 +14,10 @@ import net.minestom.server.instance.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN},
+        description = "Spawns a tnt which removes a large radius of the blocks around"
+)
 public class NukeCommand extends Command {
 
     // 1. Nuke (delete all blocks in x radius), 2. Nuke replace (delete all blocks in x radius, after y seconds replace)

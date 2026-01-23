@@ -31,6 +31,10 @@ import java.util.stream.Stream;
 
 import static java.lang.Math.floor;
 
+@CommandMetadata(
+        categories = {CommandCategory.GENERIC, CommandCategory.SERVER},
+        description = "Displays server statistics"
+)
 public class TpsCommand extends Command {
 
     public static final AtomicReference<TickMonitor> LAST_TICK = new AtomicReference<>();

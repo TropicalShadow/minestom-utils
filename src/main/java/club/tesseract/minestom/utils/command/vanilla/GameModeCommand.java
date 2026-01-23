@@ -1,5 +1,7 @@
 package club.tesseract.minestom.utils.command.vanilla;
 
+import club.tesseract.minestom.utils.command.CommandCategory;
+import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -18,6 +20,10 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN, CommandCategory.PLAYER, CommandCategory.VANILLA},
+        description = "Changes your gamemode"
+)
 public class GameModeCommand extends Command {
 
     private static class ExactGameModeCommand extends Command {
@@ -93,7 +99,7 @@ public class GameModeCommand extends Command {
     }
 
     public GameModeCommand() {
-        super("gamemode");
+        super("gamemode", "gmc", "gms", "gmsp", "gma");
         MinecraftServer.getGlobalEventHandler().addListener(PlayerCommandEvent.class, event -> {
             if (!event.getCommand().contains(" "))
                 switch (event.getCommand()) {

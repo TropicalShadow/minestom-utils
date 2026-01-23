@@ -1,5 +1,7 @@
 package club.tesseract.minestom.utils.command.vanilla;
 
+import club.tesseract.minestom.utils.command.CommandCategory;
+import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
@@ -11,6 +13,10 @@ import net.minestom.server.entity.Player;
 import java.util.List;
 import java.util.Optional;
 
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN, CommandCategory.PLAYER, CommandCategory.WORLD, CommandCategory.VANILLA},
+        description = "Teleports a player to another player or location"
+)
 public class TeleportCommand extends Command {
 
     PlayerArgument multiplePlayersArgument = new PlayerArgument("targets", false);

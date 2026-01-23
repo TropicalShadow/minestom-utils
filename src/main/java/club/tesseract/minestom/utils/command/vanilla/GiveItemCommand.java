@@ -1,5 +1,7 @@
 package club.tesseract.minestom.utils.command.vanilla;
 
+import club.tesseract.minestom.utils.command.CommandCategory;
+import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -21,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN, CommandCategory.VANILLA, CommandCategory.PLAYER},
+        description = "Gives an item to a player or entity"
+)
 public class GiveItemCommand extends Command {
 
 

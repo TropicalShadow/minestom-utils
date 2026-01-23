@@ -9,6 +9,10 @@ import net.minestom.server.command.builder.Command;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventDispatcher;
 
+@CommandMetadata(
+        categories = {CommandCategory.PLAYER, CommandCategory.ADMIN},
+        description = "Toggles flight for yourself or another player"
+)
 public class FlyCommand extends Command {
 
     public FlyCommand() {
@@ -16,7 +20,7 @@ public class FlyCommand extends Command {
 
         setCondition(ExtraConditions.hasPermission("gamesdk.command.fly"));
 
-        setDefaultExecutor((sender, context) ->{
+        setDefaultExecutor((sender, _) ->{
             if(!(sender instanceof Player player)) {
                 sender.sendMessage(Component.text("You must be a player to use this command!", NamedTextColor.RED));
                 return;

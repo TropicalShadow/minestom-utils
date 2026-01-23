@@ -13,6 +13,10 @@ import net.minestom.server.entity.Player;
 
 import java.util.Optional;
 
+@CommandMetadata(
+        categories = {CommandCategory.ADMIN},
+        description = "Executes a command as another player"
+)
 public final class SudoCommand extends Command {
 
     private static final ArgumentCommand SUDO_COMMAND = ArgumentType.Command("command");
