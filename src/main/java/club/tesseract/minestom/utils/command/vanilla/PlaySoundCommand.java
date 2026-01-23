@@ -1,4 +1,4 @@
-package club.tesseract.minestom.utils.command;
+package club.tesseract.minestom.utils.command.vanilla;
 
 import club.tesseract.minestom.utils.command.args.ArgumentSound;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
@@ -32,9 +32,7 @@ public class PlaySoundCommand extends Command {
 
         setCondition(ExtraConditions.hasPermission("gamesdk.command.playsound"));
 
-        setDefaultExecutor((sender, context) -> {
-            sender.sendMessage("Usage: /playsound <sound> <pitch>");
-        });
+        setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /playsound <sound> <pitch>"));
 
 
         addSyntax((sender, context) ->{

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public final class ExtraConditions {
 
     public static ArrayList<String> permissions = new ArrayList<>();
@@ -26,6 +27,10 @@ public final class ExtraConditions {
         };
     }
 
+    public static @NotNull CommandCondition orOp(@NotNull CommandCondition... conditions) {
+        return or(isOp(), combinedCondition(conditions));
+    }
+
     public static @NotNull CommandCondition or(@NotNull CommandCondition... conditions) {
         return (sender, commandName) -> {
             for (CommandCondition condition : conditions) {
@@ -39,7 +44,7 @@ public final class ExtraConditions {
 
 
     public static @NotNull CommandCondition isPlayer() {
-        return (sender, commandName) -> {
+        return (sender, _) -> {
             if (sender instanceof ConsoleSender) {
                 return false; // Console cannot execute commands meant for players
             }
@@ -64,7 +69,7 @@ public final class ExtraConditions {
     }
 
     public static @NotNull CommandCondition isOp() {
-        return (sender, commandName) -> {
+        return (sender, _) -> {
             if (sender instanceof ConsoleSender) {
                 return true; // Console is considered as op
             }
@@ -78,7 +83,7 @@ public final class ExtraConditions {
     }
 
     public static CommandCondition isTropical(){
-        return (sender, commandName) -> {
+        return (sender, _) -> {
             if (sender instanceof ConsoleSender) {
                 return true; // Console can execute this command
             }

@@ -1,4 +1,4 @@
-package club.tesseract.minestom.utils.command;
+package club.tesseract.minestom.utils.command.vanilla;
 
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;

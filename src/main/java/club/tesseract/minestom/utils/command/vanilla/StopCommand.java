@@ -1,5 +1,5 @@
 
-package club.tesseract.minestom.utils.command;
+package club.tesseract.minestom.utils.command.vanilla;
 
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
@@ -15,7 +15,7 @@ public class StopCommand extends Command {
 
         setCondition(ExtraConditions.hasPermission("minecraft.command.stop"));
 
-        setDefaultExecutor((sender, context) -> {
+        setDefaultExecutor((sender, _) -> {
             if(sender instanceof Player player){
                 if(player.getPermissionLevel() < 4){
                     player.sendMessage(Component.text("You do not have permission to use this command.", NamedTextColor.RED));

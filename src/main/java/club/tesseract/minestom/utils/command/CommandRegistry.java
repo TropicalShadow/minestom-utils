@@ -1,5 +1,6 @@
 package club.tesseract.minestom.utils.command;
 
+import club.tesseract.minestom.utils.command.vanilla.*;
 import net.minestom.server.MinecraftServer;
 
 public final class CommandRegistry {
@@ -29,11 +30,15 @@ public final class CommandRegistry {
         );
     }
 
+    public static void registerGeneric(){
+        MinecraftServer.getCommandManager().register(
+                new ParticleCommand()
+        );
+    }
+
     public static void registerAll(){
         registerServer();
         registerPlayer();
+        registerGeneric();
     }
-
-
-
 }

@@ -1,4 +1,4 @@
-package club.tesseract.minestom.utils.command;
+package club.tesseract.minestom.utils.command.vanilla;
 
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
@@ -40,12 +40,7 @@ public final class ClearItemCommand extends Command {
     public ClearItemCommand() {
         super("clear");
 
-        setCondition(
-                ExtraConditions.or(
-                        ExtraConditions.hasPermission("minecraft.command.clear"),
-                        ExtraConditions.isOp()
-                )
-        );
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.clear")));
 
         setDefaultExecutor((sender, _) -> {
             if (!(sender instanceof Player player)) {
@@ -110,7 +105,6 @@ public final class ClearItemCommand extends Command {
             sender.sendMessage(
                     Component.translatable("commands.clear.success.single", NamedTextColor.GRAY).arguments(Component.text(finalCount), players.getFirst().getName())
             );
-            return;
         } else {
             sender.sendMessage(
                     Component.translatable("commands.clear.success.multiple", NamedTextColor.GRAY).arguments(Component.text(finalCount), Component.text(players.size()))
