@@ -22,9 +22,7 @@ public class TeleportCommand extends Command {
 
         setCondition(ExtraConditions.hasPermission("minecraft.command.tp"));
 
-        setDefaultExecutor((sender, context) -> {
-            sender.sendMessage("Usage: /teleport <player> [player]");
-        });
+        setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /teleport <player> [player]"));
 
 
         addSyntax((sender, context) -> {
