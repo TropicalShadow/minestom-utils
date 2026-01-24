@@ -24,10 +24,10 @@ import java.util.function.Predicate;
 /**
  * Clear Inventory Command from Vanilla Minecraft<br/>
  * Usage: /clear [players] [item] [maxCount]<br/>
- * Permission: minecraft.command.clear or Operator
+ * Permission: minecraft.command.clear or Operator<br/>
+ * <b>NOTE</b>: ItemStack Predicates are not how they are in vanilla and require an exact match
  *
  * @author TropicalShadow
- * @implNote ItemStack Predicates are not how they are in vanilla and require an exact match
  */
 @CommandMetadata(
         categories = {CommandCategory.ADMIN, CommandCategory.PLAYER, CommandCategory.VANILLA},
