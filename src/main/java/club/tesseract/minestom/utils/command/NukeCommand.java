@@ -1,5 +1,6 @@
 package club.tesseract.minestom.utils.command;
 
+import club.tesseract.minestom.utils.command.condition.Condition;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import club.tesseract.minestom.utils.entity.custom.NukeTNT;
 import net.minestom.server.command.CommandSender;
@@ -26,10 +27,10 @@ public class NukeCommand extends Command {
     public NukeCommand() {
         super("nuke");
 
-        setCondition(Conditions.all(
-                Conditions::playerOnly,
-                ExtraConditions.hasPermission("gamesdk.command.nuke")
-        ));
+        setCondition(Condition
+                .builder(Conditions::playerOnly)
+                .and(ExtraConditions.hasPermission("gamesdk.command.nuke"))
+                .build());
 
         setDefaultExecutor(this::nukeDefault);
     }
