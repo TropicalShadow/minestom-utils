@@ -85,13 +85,11 @@ public class MannequinNPC extends NPC {
         set(DataComponents.CUSTOM_NAME,  hasPrefix ? NPC_TAG : above == null ? name : above);
     }
 
-    public void setSkin(ResolvableProfile profile){
-        this.editEntityMeta(MannequinMeta.class, meta->{
-            meta.setProfile(profile);
-        });
+    public void setSkin(@NotNull ResolvableProfile profile){
+        editEntityMeta(MannequinMeta.class, meta-> meta.setProfile(profile));
     }
 
-    public void setSkin(PlayerSkin skin){
+    public void setSkin(@NotNull PlayerSkin skin){
         setSkin(new ResolvableProfile(skin));
     }
 
