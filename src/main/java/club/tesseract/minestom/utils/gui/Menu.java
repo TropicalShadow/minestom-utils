@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Utility class for creating menus
@@ -59,7 +60,7 @@ public abstract class Menu {
         return this.inventory;
     }
 
-    protected final void set(int slot, ItemStack itemStack, BiConsumer<Player, Click> handler) {
+    protected final void set(int slot, ItemStack itemStack, Consumer<Click> handler) {
         this.inventory.setItemStack(slot, itemStack);
         if(this.clickHandlers.containsKey(slot)) {
             var oldListener = this.clickHandlers.get(slot);
@@ -73,7 +74,7 @@ public abstract class Menu {
     }
 
     protected final void set(int slot, ItemStack itemStack) {
-        this.set(slot, itemStack, (_, _) -> {});
+        this.set(slot, itemStack, (_) -> {});
     }
 
     protected final void add(ItemStack itemStack) {
@@ -94,11 +95,11 @@ public abstract class Menu {
         });
     }
 
-    private EventListener<@NotNull InventoryPreClickEvent> eventListener(int slot, BiConsumer<Player, Click> handler) {
+    private EventListener<@NotNull InventoryPreClickEvent> eventListener(int slot, Consumer<Click> handler) {
         return EventListener.of(InventoryPreClickEvent.class, event -> {
             if (event.getSlot() == slot) {
-                event.setCancelled(true);
-                handler.accept(event.getPlayer(), event.getClick());
+                event.setCancelled(true); // TODO - make this not as restrictive for GUI impl
+                handler.accept(event.getClick());
             }
         });
     }
