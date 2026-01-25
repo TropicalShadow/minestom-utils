@@ -21,15 +21,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see MannequinMeta
  * @see EntityType#MANNEQUIN
  */
-public class MannequinNPC extends EntityCreature {
-    public MannequinNPC() {
+public class MannequinEntity extends EntityCreature {
+    public MannequinEntity() {
         super(EntityType.MANNEQUIN);
         this.editEntityMeta(MannequinMeta.class, meta->{
             meta.setImmovable(true);
         });
     }
 
-    public MannequinNPC(@Nullable ResolvableProfile skin, @Nullable Component name) {
+    public MannequinEntity(@Nullable ResolvableProfile skin, @Nullable Component name) {
         this();
         if(skin != null) setSkin(skin);
         if(name != null) setName(name);
@@ -57,10 +57,10 @@ public class MannequinNPC extends EntityCreature {
         this.editEntityMeta(MannequinMeta.class, meta-> meta.setProfile(Objects.requireNonNullElse(profile, ResolvableProfile.EMPTY)));
     }
 
-    public MannequinNPC duplicate(){
-        AtomicReference<MannequinNPC> npc = new AtomicReference<>();
+    public MannequinEntity duplicate(){
+        AtomicReference<MannequinEntity> npc = new AtomicReference<>();
         this.editEntityMeta(MannequinMeta.class, meta->{
-            MannequinNPC mannequinNPC = new MannequinNPC(meta.getProfile(), get(DataComponents.CUSTOM_NAME));
+            MannequinEntity mannequinNPC = new MannequinEntity(meta.getProfile(), get(DataComponents.CUSTOM_NAME));
             mannequinNPC.editEntityMeta(MannequinMeta.class, meta1->{
                 meta1.setImmovable(meta.isImmovable());
                 meta1.setDescription(meta.getDescription());
@@ -68,7 +68,7 @@ public class MannequinNPC extends EntityCreature {
             npc.set(mannequinNPC);
         });
 
-        MannequinNPC mannequin = npc.get();
+        MannequinEntity mannequin = npc.get();
         mannequin.tagHandler().updateContent(this.tagHandler().asCompound());
 
         return mannequin;
