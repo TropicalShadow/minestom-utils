@@ -21,7 +21,7 @@ import java.util.function.BiConsumer;
 /**
  * Utility class for creating menus
  * {@link Menu#close()} should be called when the menu is no longer needed to prevent memory leaks
- * @author TropicalShadow
+ * @author Mudkjp
  * @see Inventory
  * @since 0.0.1
  */
