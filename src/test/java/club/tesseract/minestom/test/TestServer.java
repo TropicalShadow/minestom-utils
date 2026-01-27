@@ -9,6 +9,7 @@ import club.tesseract.minestom.utils.entity.npc.NPC;
 import club.tesseract.minestom.utils.entity.player.MinestomPlayer;
 import club.tesseract.minestom.utils.instance.dimension.FullBrightDimension;
 import club.tesseract.minestom.utils.metrics.SparkManager;
+import club.tesseract.minestom.utils.misc.lang.MiniMessageHelper;
 import club.tesseract.minestom.utils.permission.LuckpermsPermission;
 import fr.ghostrider584.axiom.AxiomMinestom;
 import net.kyori.adventure.text.Component;
@@ -21,6 +22,7 @@ import net.minestom.server.entity.EntityType;
 import net.minestom.server.event.instance.AddEntityToInstanceEvent;
 import net.minestom.server.event.instance.InstanceRegisterEvent;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
+import net.minestom.server.event.player.PlayerSpawnEvent;
 import net.minestom.server.instance.InstanceContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,8 @@ public final class TestServer {
                 log.info("Marker {} created", data.name());
                 data.createDisplay(event.getInstance());
             });
+        }).addListener(PlayerSpawnEvent.class, event -> {
+            event.getPlayer().sendMessage(MiniMessageHelper.toComponent("<cyan>hello, %s", "world"));
         });
 
 
