@@ -6,6 +6,7 @@ import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
 import net.kyori.adventure.translation.GlobalTranslator;
@@ -21,7 +22,6 @@ import java.util.Map;
 
 public final class LangUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(LangUtils.class);
-    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
     private static final Map<String, MiniMessageTranslationStore> TRANSLATORS = new ConcurrentHashMap<>();
 
     public static void registerLang(@Subst("gamemode") String namespace, String baseBundlePath, Locale... supportedLocales) {
@@ -32,7 +32,7 @@ public final class LangUtils {
         }
 
         MiniMessageTranslationStore store = TRANSLATORS.computeIfAbsent(namespace, ns -> {
-            MiniMessageTranslationStore newTranslator = MiniMessageTranslationStore.create(Key.key(ns, "translations"), MINI_MESSAGE);
+            MiniMessageTranslationStore newTranslator = MiniMessageTranslationStore.create(Key.key(ns, "translations"), MiniMessageHelper.MINI_MESSAGE);
             GlobalTranslator.translator().addSource(newTranslator);
             return newTranslator;
         });
@@ -58,7 +58,7 @@ public final class LangUtils {
 
     @NotNull
     public static Component serverRender(Locale locale, String langKey, ComponentLike... args) {
-        return GlobalTranslator.render(Component.translatable(langKey).arguments(args), locale);
+        return GlobalTranslator.render(Component.translatable(langKey).arguments(args), locale).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE); // prevent italics defaulting in ui elements
     }
 
     private LangUtils() {
