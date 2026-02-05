@@ -9,7 +9,7 @@ hikari = "7.0.2"
 h2database = "2.4.240"
 polar = "1.15.0"
 fastutil = "8.5.18"
-axiom = "0.0.3"
+axiom = "0.0.4"
 spark = "1.10-SNAPSHOT"
 bytesocks-java-client = "1.0-SNAPSHOT"
 
