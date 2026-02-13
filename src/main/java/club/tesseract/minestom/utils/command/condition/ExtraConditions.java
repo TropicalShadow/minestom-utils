@@ -11,6 +11,7 @@ import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 @SuppressWarnings("unused")
 public final class ExtraConditions {
@@ -50,11 +51,7 @@ public final class ExtraConditions {
             }
 
             if (!(sender instanceof PermissionHolder permHolder)) return false;
-            if (permHolder.hasPermission(permission).asBoolean()) {
-                return true;
-            }
-
-            return false;
+            return permHolder.hasPermission(permission).asBoolean();
         };
     }
 
@@ -72,6 +69,39 @@ public final class ExtraConditions {
         };
     }
 
+    public static CommandCondition isOnlineUser(UUID playerId) {
+        return (sender, _) -> {
+            if (sender instanceof ConsoleSender) {
+                return true; // Console can execute this command
+            }
+
+            Auth auth = MinecraftServer.process().auth();
+            if((auth instanceof Auth.Velocity || auth instanceof Auth.Online)){
+                if(sender instanceof Player player){
+                    return player.getUuid().equals(playerId);
+                }
+            }
+            return false; // Non-player entities cannot execute this command
+        };
+    }
+
+    public static CommandCondition isOnlineUser(String username) {
+        return (sender, _) -> {
+            if (sender instanceof ConsoleSender) {
+                return true; // Console can execute this command
+            }
+
+            Auth auth = MinecraftServer.process().auth();
+            if((auth instanceof Auth.Velocity || auth instanceof Auth.Online)){
+                if(sender instanceof Player player){
+                    return player.getUsername().equals(username);
+                }
+            }
+            return false; // Non-player entities cannot execute this command
+        };
+    }
+
+    @Deprecated(forRemoval = true)
     public static CommandCondition isTropical(){
         return (sender, _) -> {
             if (sender instanceof ConsoleSender) {
