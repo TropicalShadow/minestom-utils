@@ -3,10 +3,10 @@ package club.tesseract.minestom.utils.permission.config;
 import me.lucko.luckperms.common.config.generic.adapter.ConfigurationAdapter;
 import me.lucko.luckperms.common.plugin.LuckPermsPlugin;
 import me.lucko.luckperms.minestom.LPMinestomPlugin;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
+import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.jetbrains.annotations.NotNull;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.hocon.HoconConfigurationLoader;
-import org.spongepowered.configurate.loader.ConfigurationLoader;
 
 import java.nio.file.Path;
 
@@ -18,7 +18,9 @@ public final class HoconConfigurationAdapter extends ModernConfigurateConfigAdap
 
     @Override
     protected ConfigurationLoader<? extends @NotNull ConfigurationNode> createLoader(Path path) {
-        return HoconConfigurationLoader.builder().path(path).build();
+        HoconConfigurationLoader.Builder builder = HoconConfigurationLoader.builder();
+        builder.setPath(path);
+        return builder.build();
     }
 
 }

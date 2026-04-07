@@ -1,12 +1,12 @@
 package club.tesseract.minestom.utils.permission.config;
 
 import com.google.common.base.Splitter;
+import com.google.common.reflect.TypeToken;
 import me.lucko.luckperms.common.config.generic.adapter.ConfigurationAdapter;
 import me.lucko.luckperms.common.plugin.LuckPermsPlugin;
+import ninja.leaping.configurate.ConfigurationNode;
+import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.jetbrains.annotations.NotNull;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.loader.ConfigurationLoader;
-import org.spongepowered.configurate.serialize.SerializationException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -43,7 +43,7 @@ public abstract class ModernConfigurateConfigAdapter implements ConfigurationAda
             throw new RuntimeException("Config is not loaded.");
         }
 
-        return this.root.node(Splitter.on('.').splitToList(path).toArray());
+        return this.root.getNode(Splitter.on('.').splitToList(path).toArray());
     }
 
     @Override
@@ -66,13 +66,13 @@ public abstract class ModernConfigurateConfigAdapter implements ConfigurationAda
     @Override
     public List<String> getStringList(String path, List<String> def) {
         ConfigurationNode node = this.resolvePath(path);
-        if (node.virtual() || !node.isList()) {
+        if (node.isVirtual() || !node.isList()) {
             return def;
         }
 
         try {
-            return node.getList(String.class, def);
-        } catch (SerializationException e) {
+            return node.getList(TypeToken.of(String.class), def);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -80,11 +80,11 @@ public abstract class ModernConfigurateConfigAdapter implements ConfigurationAda
     @Override
     public Map<String, String> getStringMap(String path, Map<String, String> def) {
         ConfigurationNode node = this.resolvePath(path);
-        if (node.virtual()) {
+        if (node.isVirtual()) {
             return def;
         }
 
-        return node.childrenMap().entrySet().stream().collect(Collectors.toMap(
+        return node.getChildrenMap().entrySet().stream().collect(Collectors.toMap(
                 k -> k.getKey().toString(),
                 v -> v.getValue().toString()
         ));
