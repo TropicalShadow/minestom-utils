@@ -36,7 +36,7 @@ public class PlaySoundCommand extends Command {
         super("playsound", "sound");
 
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.command.playsound"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("gamesdk.command.playsound")));
 
         setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /playsound <sound> <pitch>"));
 

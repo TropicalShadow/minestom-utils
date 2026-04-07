@@ -1,14 +1,10 @@
 package club.tesseract.minestom.utils.misc.lang;
 
-import com.google.errorprone.annotations.FormatMethod;
-import com.google.errorprone.annotations.FormatString;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.PrintFormat;
-import org.intellij.lang.annotations.RegExp;
-import org.slf4j.helpers.MessageFormatter;
 
 public enum MiniMessageHelper {
     ;

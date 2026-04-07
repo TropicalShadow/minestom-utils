@@ -44,15 +44,13 @@ public class TpsCommand extends Command {
     public TpsCommand() {
         super("tps", "tickrate");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.command.tps"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.tps")));
 
-        MinecraftServer.getGlobalEventHandler().addListener(ServerTickMonitorEvent.class, event ->{
-            LAST_TICK.set(event.getTickMonitor());
-        });
+        MinecraftServer.getGlobalEventHandler().addListener(ServerTickMonitorEvent.class, event -> LAST_TICK.set(event.getTickMonitor()));
         ConnectionManager connectionManager = MinecraftServer.getConnectionManager();
         InstanceManager instanceManager = MinecraftServer.getInstanceManager();
 
-        setDefaultExecutor((sender, context) -> {
+        setDefaultExecutor((sender, _) -> {
             long totalMem = Runtime.getRuntime().totalMemory() / 1024 / 1024;
             long freeMem = Runtime.getRuntime().freeMemory() / 1024 / 1024;
             long ramUsage = totalMem - freeMem;
@@ -212,7 +210,7 @@ public class TpsCommand extends Command {
 
             if (list.isEmpty()) return -1;
 
-            var att = (Attribute) list.get(0);
+            var att = (Attribute) list.getFirst();
             Double value = (Double) att.getValue();
             if (value == null || value < 0) return -1;
 

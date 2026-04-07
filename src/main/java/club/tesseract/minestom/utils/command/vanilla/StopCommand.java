@@ -18,7 +18,7 @@ public class StopCommand extends Command {
     public StopCommand() {
         super("stop");
 
-        setCondition(ExtraConditions.hasPermission("minecraft.command.stop"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.stop")));
 
         setDefaultExecutor((sender, _) -> {
             if(sender instanceof Player player){

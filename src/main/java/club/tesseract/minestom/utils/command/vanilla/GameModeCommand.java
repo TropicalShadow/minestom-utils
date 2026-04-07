@@ -109,6 +109,9 @@ public class GameModeCommand extends Command {
                     case "gma", "gm2" -> event.setCommand("gamemode adventure");
                 }
         });
+
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.gamemode")));
+
         MinecraftServer.getGlobalEventHandler().addListener(PlayerGameModeRequestEvent.class, event ->{
             Player player = event.getPlayer();
             GameMode gameMode = event.getRequestedGameMode();

@@ -38,7 +38,7 @@ public class GiveItemCommand extends Command {
     public GiveItemCommand() {
         super("give");
 
-        setCondition(ExtraConditions.hasPermission("minecraft.command.give"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.give")));
 
         setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /give <targets> <item> [count]"));
 

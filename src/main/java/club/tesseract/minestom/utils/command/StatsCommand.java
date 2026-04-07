@@ -25,7 +25,7 @@ public class StatsCommand extends Command {
     public StatsCommand() {
         super("stats");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.command.stats"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.stats")));
 
         addSubcommand(new InstanceStatsCommand());
         addSubcommand(new PlayerStatsCommand());
@@ -40,7 +40,7 @@ public class StatsCommand extends Command {
 
             ConnectionManager connectionManager = MinecraftServer.getConnectionManager();
 
-            setDefaultExecutor((sender, context) -> {
+            setDefaultExecutor((sender, _) -> {
                 Component message = Component.text("Players Online (", NamedTextColor.GRAY)
                         .append(Component.text(connectionManager.getOnlinePlayers().size(), NamedTextColor.GREEN))
                         .append(Component.text(") ", NamedTextColor.GRAY));
@@ -99,7 +99,7 @@ public class StatsCommand extends Command {
             InstanceManager instanceManager = MinecraftServer.getInstanceManager();
 
 
-            setDefaultExecutor((sender, context) -> {
+            setDefaultExecutor((sender, _) -> {
                 Component message = Component.text("Instance (", NamedTextColor.GRAY)
                         .append(Component.text(instanceManager.getInstances().size(), NamedTextColor.GREEN))
                         .append(Component.text(") ", NamedTextColor.GRAY))

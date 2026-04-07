@@ -1,6 +1,5 @@
 package club.tesseract.minestom.utils.command;
 
-import club.tesseract.minestom.utils.command.args.GenericArguments;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -25,7 +24,7 @@ public class HealCommand extends Command {
     public HealCommand() {
         super("heal");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.command.heal"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.heal")));
 
         setDefaultExecutor((sender, _) ->{
             if(!(sender instanceof Player player)){

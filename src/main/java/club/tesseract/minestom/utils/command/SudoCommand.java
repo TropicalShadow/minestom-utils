@@ -24,9 +24,9 @@ public final class SudoCommand extends Command {
     public SudoCommand() {
         super("sudo");
 
-        setCondition(ExtraConditions.hasPermission("gamesdk.command.sudo"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.sudo")));
 
-        setDefaultExecutor((sender, context) -> sender.sendMessage("Usage: /sudo <player> <command>"));
+        setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /sudo <player> <command>"));
 
         addSyntax((sender, context) -> {
             CommandResult cmd =  context.get(SUDO_COMMAND);

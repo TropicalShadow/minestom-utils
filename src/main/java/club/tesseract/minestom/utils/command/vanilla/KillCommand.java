@@ -2,6 +2,7 @@ package club.tesseract.minestom.utils.command.vanilla;
 
 import club.tesseract.minestom.utils.command.CommandCategory;
 import club.tesseract.minestom.utils.command.CommandMetadata;
+import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.command.builder.Command;
@@ -27,6 +28,7 @@ public class KillCommand extends Command {
         super("kill");
 
         setDefaultExecutor((sender, _) -> sender.sendMessage("Usage: /kill <player>"));
+        setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.kill")));
 
         addSyntax((sender, context) -> {
             final EntityFinder finder = context.get(TARGET_ARGUMENT);
