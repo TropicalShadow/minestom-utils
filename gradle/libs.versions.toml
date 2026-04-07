@@ -1,5 +1,5 @@
 [versions]
-lombok = "1.18.42"
+lombok = "1.18.44"
 minestom = "2026.03.25-1.21.11"
 slf4j = "2.0.17"
 logback = "1.5.32"
