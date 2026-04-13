@@ -55,7 +55,7 @@ public class GiveItemCommand extends Command {
             final int count = context.get(COUNT_ARGUMENT);
 
             giveItems(sender, finder, itemStack.withAmount(count));
-        });
+        }, TARGETS_ARGUMENT, ITEM_MATERIAL_ARGUMENT, COUNT_ARGUMENT);
     }
 
 
@@ -118,7 +118,7 @@ public class GiveItemCommand extends Command {
             return itemStack.get(DataComponents.CUSTOM_NAME);
         }
         final Key key = itemStack.material().key();
-        return Component.translatable("item." + key.value() + ".name");
+        return Component.translatable("item.minecraft." + key.value());
     }
 
     /**
