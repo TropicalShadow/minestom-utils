@@ -20,14 +20,17 @@ import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
 public interface PermissionHolder extends NamedAndIdentified, Audience {
+
     /**
-     * The LuckPerms instance used for permission management.
-     * This is a static reference to the LuckPerms API, which can be used to access permissions and roles.
+     * Lazily retrieves the LuckPerms instance to avoid class-load-time failures
+     * when LuckPerms has not yet been registered.
      */
-    LuckPerms luckperms = LuckPermsProvider.get();
+    private static LuckPerms luckperms() {
+        return LuckPermsProvider.get();
+    }
 
     default PlayerAdapter<Player> getPlayerAdapter() {
-        return luckperms.getPlayerAdapter(Player.class);
+        return luckperms().getPlayerAdapter(Player.class);
     }
 
     default User getLuckpermsUser(){
@@ -38,7 +41,7 @@ public interface PermissionHolder extends NamedAndIdentified, Audience {
     @Nullable
     default Group getTopGroup() {
         String primaryGroup = getLuckpermsUser().getPrimaryGroup();
-        return luckperms.getGroupManager().getGroup(primaryGroup);
+        return luckperms().getGroupManager().getGroup(primaryGroup);
     }
 
     default OptionalInt getTopGroupWeight() {
@@ -61,7 +64,7 @@ public interface PermissionHolder extends NamedAndIdentified, Audience {
     default CompletableFuture<@NotNull DataMutateResult> setPermission(String permission, boolean value) {
         DataMutateResult result = getLuckpermsUser().data().add(Node.builder(permission).value(value).build());
 
-        return luckperms.getUserManager().saveUser(getLuckpermsUser()).thenApply((x) -> result);
+        return luckperms().getUserManager().saveUser(getLuckpermsUser()).thenApply((x) -> result);
     }
 
     /**

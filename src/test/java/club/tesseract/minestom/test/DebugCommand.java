@@ -43,6 +43,10 @@ public class DebugCommand extends Command {
             MarkerData data = MarkerData.createFrom(entity);
             if(data.name() == null)return;
             CustomData cdata = entity.get(DataComponents.CUSTOM_DATA);
+            if(cdata == null){
+                sender.sendMessage("No custom data");
+                return;
+            }
             String internalData = cdata.nbt().getString("data");
             sender.sendMessage(internalData);
         });

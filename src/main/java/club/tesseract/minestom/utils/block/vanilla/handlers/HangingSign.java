@@ -3,7 +3,10 @@ package club.tesseract.minestom.utils.block.vanilla.handlers;
 
 import lombok.Getter;
 import net.kyori.adventure.key.Key;
+import net.minestom.server.instance.block.Block;
 import net.minestom.server.instance.block.BlockHandler;
+import net.minestom.server.registry.RegistryTag;
+import net.minestom.server.registry.TagKey;
 import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +17,7 @@ public class HangingSign implements BlockHandler {
 
     @Getter
     private static final HangingSign INSTANCE = new HangingSign();
-    public static final Key KEY = Key.key("hanging_sign");
+    public static final Key KEY = Key.key(Key.MINECRAFT_NAMESPACE, "hanging_sign");
 
     private static final List<Tag<?>> TAGS = List.of(
             Tag.Boolean("is_waxed"),

@@ -1,34 +1,19 @@
 package club.tesseract.minestom.utils.instance.polar;
 
 import club.tesseract.minestom.utils.entity.EntityData;
-import club.tesseract.minestom.utils.entity.NoPhysicsEntity;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.hollowcube.polar.PolarWorldAccess;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.nbt.*;
-import net.kyori.adventure.text.Component;
-import net.minestom.server.MinecraftServer;
-import net.minestom.server.codec.Codec;
-import net.minestom.server.codec.Transcoder;
-import net.minestom.server.component.DataComponents;
-import net.minestom.server.coordinate.Pos;
-import net.minestom.server.entity.EntityType;
-import net.minestom.server.entity.MetadataDef;
 import net.minestom.server.event.instance.InstanceRegisterEvent;
+import net.minestom.server.event.instance.InstanceUnregisterEvent;
 import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.Instance;
-import net.minestom.server.item.component.CustomData;
 import net.minestom.server.network.NetworkBuffer;
-import net.minestom.server.registry.RegistryTranscoder;
-import net.minestom.server.utils.UUIDUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 
@@ -51,38 +36,39 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
 
     @Override
     public void loadChunkData(@NotNull Chunk chunk, @Nullable NetworkBuffer userData) {
-        if(userData == null) return;
+        if (userData == null) return;
         byte FEATURE_VERSION = userData.read(NetworkBuffer.BYTE);
-        if(FEATURE_VERSION != CURRENT_FEATURE_VERSION){
+        if (FEATURE_VERSION != CURRENT_FEATURE_VERSION) {
             log.warn("Polar Paper World Access: Unsupported feature version: {}", FEATURE_VERSION);
         }
 
         List<EntityData> entities = readEntities(userData);
         final Instance instance = chunk.getInstance();
-        if(instance.isRegistered()){
+        if (instance.isRegistered()) {
             instance.scheduleNextTick(registerEntities(entities));
             return;
         }
         instance.eventNode().addListener(InstanceRegisterEvent.class, event -> {
-            event.getInstance().scheduleNextTick(registerEntities(entities));
-        });
+                    event.getInstance().scheduleNextTick(registerEntities(entities));
+                })
+                .addListener(InstanceUnregisterEvent.class, _ -> this.entities.clear());
     }
 
-    Consumer<Instance> registerEntities(List<EntityData> entities){
+    Consumer<Instance> registerEntities(List<EntityData> entities) {
         return instance -> {
-            for(EntityData data : entities){
+            for (EntityData data : entities) {
                 entityCreator.apply(instance, data);
             }
             this.entities.addAll(entities);
         };
     }
 
-    List<EntityData> readEntities(NetworkBuffer userData){
+    List<EntityData> readEntities(NetworkBuffer userData) {
         int entities = userData.read(NetworkBuffer.VAR_INT);
-        if(entities == 0) return List.of();
+        if (entities == 0) return List.of();
         log.debug("Polar Paper World Access: {} entities", entities);
         List<EntityData> entityDataList = new ArrayList<>(entities);
-        for(int i = 0; i < entities; i++){
+        for (int i = 0; i < entities; i++) {
             try {
                 double x = userData.read(NetworkBuffer.DOUBLE);
                 double y = userData.read(NetworkBuffer.DOUBLE);
@@ -92,7 +78,7 @@ public class PolarPaperWorldAccess implements PolarWorldAccess {
                 byte[] data = userData.read(NetworkBuffer.BYTE_ARRAY);
                 EntityData entityData = new EntityData(x, y, z, yaw, pitch, data);
                 entityDataList.add(entityData);
-            }catch(Exception ex){
+            } catch (Exception ex) {
                 log.warn("Polar Paper World Access: Failed to read entity", ex);
             }
         }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class FullBrightDimension {
 
-    private static FullBrightDimension instance;
+    private static volatile FullBrightDimension instance;
 
     @Getter
     private final @NotNull RegistryKey<@NotNull DimensionType> registryKeyDimension;
@@ -42,7 +42,11 @@ public final class FullBrightDimension {
     @NotNull
     public static FullBrightDimension getInstance() {
         if (instance == null) {
-            instance = new FullBrightDimension();
+            synchronized (FullBrightDimension.class) {
+                if(instance == null){
+                    instance = new FullBrightDimension();
+                }
+            }
         }
         return instance;
     }

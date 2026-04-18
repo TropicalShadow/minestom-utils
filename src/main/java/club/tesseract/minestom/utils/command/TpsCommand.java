@@ -58,6 +58,10 @@ public class TpsCommand extends Command {
             double cpuPercent = getCpuLoadPercent();
 
             TickMonitor monitor = LAST_TICK.get();
+            if(monitor == null){
+                sender.sendMessage(Component.text("No tick monitor available"));
+                return;
+            }
             double tickMs = monitor.getTickTime();
             int tpsSetting = ServerFlag.SERVER_TICKS_PER_SECOND;
             int maxTickMs = MinecraftServer.TICK_MS;

@@ -124,22 +124,21 @@ public class StatsCommand extends Command {
             });
 
             addSyntax((sender, context) -> {
-                Player player = (Player) sender;
                 UUID instanceUuid;
                 try {
                      instanceUuid = context.get(INSTANCE_UUID);
                 }catch (NullPointerException ex){
-                    player.sendMessage(Component.text("Please specify an instance UUID", NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Please specify an instance UUID", NamedTextColor.RED));
                     return;
                 }
 
                 Instance instance = instanceManager.getInstance(instanceUuid);
                 if (instance == null) {
-                    player.sendMessage(Component.text("Instance not found", NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Instance not found", NamedTextColor.RED));
                     return;
                 }
 
-                player.sendMessage(getInstanceStats(instance));
+                sender.sendMessage(getInstanceStats(instance));
             }, INSTANCE_UUID);
 
         }

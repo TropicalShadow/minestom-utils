@@ -77,6 +77,7 @@ public class GiveItemCommand extends Command {
             return;
         }
 
+        long validTargets = entities.stream().filter(e -> e instanceof EquipmentHandler).count();
         boolean isMultiple = entities.size() > 1;
         Entity first = entities.getFirst();
 
@@ -85,7 +86,7 @@ public class GiveItemCommand extends Command {
                 isMultiple ? Component.textOfChildren(
                         Component.text(success),
                         Component.text("/"),
-                        Component.text(entities.size()),
+                        Component.text(validTargets),
                         Component.space(),
                         Component.text("players")
                 ) : getName(first),

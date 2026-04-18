@@ -51,6 +51,7 @@ public class NukeTNT extends LivingEntity {
     @Override
     protected void despawn() {
         // generate circle, send more tnt
+        final Instance instance = this.getInstance();
         int subFuse = (int) (fuseTime * percentageSubTnt);
         nukeCenter = this.position.asVec();
         BlockIterator blockIterator = new BlockIterator(this.position, 0, 25);
@@ -62,13 +63,12 @@ public class NukeTNT extends LivingEntity {
                 nukeCenter = blockPoint.asVec();
             }
         }
-        UUID instanceId = instance.getUuid();
-
+        final UUID instanceId = instance.getUuid();
         MinecraftServer.getSchedulerManager().scheduleTask(() -> {
-            Instance instance = MinecraftServer.getInstanceManager().getInstance(instanceId);
-            if (instance == null) return TaskSchedule.stop();
+            Instance obtainedInstance = MinecraftServer.getInstanceManager().getInstance(instanceId);
+            if (obtainedInstance == null) return TaskSchedule.stop();
             AbsoluteBlockBatch blockBatch = explodeRadius(nukeCenter, 50);
-            blockBatch.apply(instance, (inverse) -> {
+            blockBatch.apply(obtainedInstance, (inverse) -> {
                 if (replace) {
                     MinecraftServer.getSchedulerManager().scheduleTask(() -> {
                         Instance refetchInstance = MinecraftServer.getInstanceManager().getInstance(instanceId);

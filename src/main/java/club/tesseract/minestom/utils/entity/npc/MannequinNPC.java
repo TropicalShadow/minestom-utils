@@ -46,6 +46,9 @@ public class MannequinNPC extends NPC {
         });
 
         MannequinNPC mannequin = npc.get();
+        if(mannequin == null) {
+            throw new NullPointerException("Mannequin NPC is null");
+        }
         mannequin.tagHandler().updateContent(this.tagHandler().asCompound());
 
         return mannequin;

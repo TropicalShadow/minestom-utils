@@ -9,6 +9,7 @@ import net.kyori.adventure.sound.Sound;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.number.ArgumentFloat;
+import net.minestom.server.command.builder.arguments.number.ArgumentNumber;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.sound.SoundEvent;
@@ -27,7 +28,7 @@ public class PlaySoundCommand extends Command {
     public static final PlayerArgument PLAYER_ARGUMENT = new PlayerArgument("players", false);
 
     static {
-        PITCH_ARGUMENT.setDefaultValue(1.0f);
+        PITCH_ARGUMENT.setDefaultValue(0.0f);
         PITCH_ARGUMENT.between(-1f, 1f);
         SOUND_ARGUMENT.setDefaultValue(SoundEvent.BLOCK_NOTE_BLOCK_HARP);
     }

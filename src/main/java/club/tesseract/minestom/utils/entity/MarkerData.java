@@ -23,14 +23,16 @@ public record MarkerData(UUID uuid, Pos position, @Nullable String name, @Nullab
 
     @NotNull
     public Entity createDisplay(@NotNull Instance instance){
-        CuboidVisualiser visualiser = new CuboidVisualiser(Area.cuboid(Vec.ZERO, maxRegion.sub(minRegion)));
+        Vec minFallback = minRegion != null ? minRegion : position.asVec();
+        Vec maxFallback = maxRegion != null ? maxRegion : position.asVec();
+        CuboidVisualiser visualiser = new CuboidVisualiser(Area.cuboid(Vec.ZERO, maxFallback.sub(minFallback)));
         visualiser.setInstance(instance, position);
         return visualiser;
     }
 
     @NotNull
     public Area.Cuboid getBoundingBox(){
-        assert minRegion != null && maxRegion != null;
+        if(minRegion == null && maxRegion == null) throw new IllegalStateException("Marker has no bounding box");
         return Area.cuboid(minRegion, maxRegion);
     }
 

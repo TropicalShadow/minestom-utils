@@ -11,12 +11,15 @@ import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public final class ExtraConditions {
 
-    public static ArrayList<String> permissions = new ArrayList<>();
+    // This can be used for luckperms permission awareness
+    public static Set<String> permissions = ConcurrentHashMap.newKeySet();
 
     public static @NotNull CommandCondition orOp(@NotNull CommandCondition... conditions) {
         return or(isOp(), and(conditions));
@@ -44,7 +47,7 @@ public final class ExtraConditions {
     }
 
     public static @NotNull CommandCondition hasPermission(@NotNull String permission) {
-        if (!permissions.contains(permission)) permissions.add(permission);
+        permissions.add(permission);
         return (sender, commandName) -> {
             if(sender instanceof ConsoleSender) {
                 return true;
@@ -95,23 +98,6 @@ public final class ExtraConditions {
             if((auth instanceof Auth.Velocity || auth instanceof Auth.Online)){
                 if(sender instanceof Player player){
                     return player.getUsername().equals(username);
-                }
-            }
-            return false; // Non-player entities cannot execute this command
-        };
-    }
-
-    @Deprecated(forRemoval = true)
-    public static CommandCondition isTropical(){
-        return (sender, _) -> {
-            if (sender instanceof ConsoleSender) {
-                return true; // Console can execute this command
-            }
-
-            Auth auth = MinecraftServer.process().auth();
-            if((auth instanceof Auth.Velocity || auth instanceof Auth.Online)){
-                if(sender instanceof Player player){
-                    return player.getUsername().equals("TropicalShadow") || player.getUsername().equals("BridgeSplash");
                 }
             }
             return false; // Non-player entities cannot execute this command

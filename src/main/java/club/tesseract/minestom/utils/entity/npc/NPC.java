@@ -29,11 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -42,8 +40,8 @@ public abstract class NPC extends EntityCreature {
     public static final Tag<@NotNull Consumer<InteractEvent<PlayerEntityInteractEvent>>> RIGHT_CLICK_TAG = Tag.Transient("right-click-consumer");
 
     private static final EventNode<EntityEvent> EVENT_NODE = EventNode.type("npc-events", EventFilter.ENTITY);
-    private static final HashMap<Integer, NPC> NON_PLAYABLE_CHARACTERS = new HashMap<>();
-    private static final Sound DEFAULT_SOUND = Sound.sound().type(SoundEvent.BLOCK_NOTE_BLOCK_PLING).pitch(2).build();
+    private static final Map<Integer, NPC> NON_PLAYABLE_CHARACTERS = new ConcurrentHashMap<>();
+    private static final Sound DEFAULT_SOUND = Sound.sound().type(SoundEvent.BLOCK_NOTE_BLOCK_PLING).pitch(1).build();
     private final Tag<Sound> INTERACT_SOUND_TAG = Tag.Transient("npc-interact-sound");
 
     static {
@@ -78,9 +76,8 @@ public abstract class NPC extends EntityCreature {
         super(entityType);
     }
 
-
     public Component getName(){
-        return this.get(DataComponents.CUSTOM_NAME);
+        return Objects.requireNonNullElse(get(DataComponents.CUSTOM_NAME), Component.text(entityType.name()));
     }
 
     public void lookClose(){
@@ -171,7 +168,7 @@ public abstract class NPC extends EntityCreature {
      * @see #unregister(NPC...)
      * @param npcs a list of NPCs to register
      */
-    public static void register(NPC... npcs){
+    public static synchronized void register(NPC... npcs){
         if(EVENT_NODE.getParent() == null){
             GlobalEventHandler eventHandler = MinecraftServer.getGlobalEventHandler();
             eventHandler.addChild(EVENT_NODE);

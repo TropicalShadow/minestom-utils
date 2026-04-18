@@ -4,6 +4,7 @@ import club.tesseract.minestom.utils.command.CommandCategory;
 import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.builder.Command;
@@ -23,6 +24,7 @@ import net.kyori.adventure.text.Component;
 import java.util.Collection;
 import java.util.List;
 
+@Slf4j
 @CommandMetadata(
         categories = {CommandCategory.ADMIN, CommandCategory.GENERIC, CommandCategory.VANILLA},
         description = "Spawns particles at a location"
@@ -67,7 +69,12 @@ public class ParticleCommand extends Command {
 
     private void executeSimple(CommandSender sender, CommandContext context) {
         Particle particle = context.get("particle");
-        Pos pos = sender instanceof Player ? ((Player) sender).getPosition() : Pos.ZERO;
+        boolean isPlayer = sender instanceof Player;
+        Pos pos = isPlayer ? ((Player) sender).getPosition() : Pos.ZERO;
+        if(!isPlayer) {
+            log.warn("Non player sender, default spawn location Pos.ZERO will be used for particle command");
+        }
+
 
         Collection<Player> players = getAllPlayers(sender);
         sendParticles(sender, particle, pos, Vec.ZERO, 0.0f, 0, false, players);

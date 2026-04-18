@@ -13,7 +13,7 @@ public class PlayerHead implements BlockHandler {
     @Getter
     private final static PlayerHead INSTANCE = new PlayerHead();
 
-    public final static Key KEY = Key.key("minecraft:skull");
+    public final static Key KEY = Key.key("minecraft:player_head");
     private final static List<Tag<?>> TAGS = List.of(
             Tag.NBT("profile")
     );

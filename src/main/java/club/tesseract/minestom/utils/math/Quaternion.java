@@ -36,7 +36,9 @@ public class Quaternion {
      * @return quaternion instance
      */
     public static Quaternion fromArray(float[] array) {
-        assert array.length == 4;
+        if(array.length != 4){
+            throw new IllegalArgumentException("Array must have length 4");
+        }
         return new Quaternion(array[0], array[1], array[2], array[3]);
     }
 
@@ -92,6 +94,7 @@ public class Quaternion {
      */
     public Quaternion normalize() {
         float n = (float) Math.sqrt(x * x + y * y + z * z + w * w);
+        if (n < 1e-10f) return identity(); // Avoid division by zero
         return new Quaternion(x / n, y / n, z / n, w / n);
     }
 
