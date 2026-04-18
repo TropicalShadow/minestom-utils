@@ -11,8 +11,11 @@ import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
+import net.minestom.server.event.EventFilter;
+import net.minestom.server.event.EventNode;
 import net.minestom.server.event.player.PlayerCommandEvent;
 import net.minestom.server.event.player.PlayerGameModeRequestEvent;
+import net.minestom.server.event.trait.PlayerEvent;
 import net.minestom.server.utils.entity.EntityFinder;
 
 import java.util.List;
@@ -25,6 +28,43 @@ import java.util.concurrent.atomic.AtomicInteger;
         description = "Changes your gamemode"
 )
 public class GameModeCommand extends Command {
+
+    private final static EventNode<PlayerEvent> eventNode = EventNode.type("gamemode-command-events", EventFilter.PLAYER);
+
+    static{
+        eventNode.addListener(PlayerCommandEvent.class, event -> {
+            if (!event.getCommand().contains(" "))
+                switch (event.getCommand()) {
+                    case "gmc", "gm1" -> event.setCommand("gamemode creative");
+                    case "gms", "gm0" -> event.setCommand("gamemode survival");
+                    case "gmsp", "gm3" -> event.setCommand("gamemode spectator");
+                    case "gma", "gm2" -> event.setCommand("gamemode adventure");
+                }
+        });
+
+        eventNode.addListener(PlayerGameModeRequestEvent.class, event ->{
+            Player player = event.getPlayer();
+            GameMode gameMode = event.getRequestedGameMode();
+            String gameModeName = gameMode.name().toLowerCase(Locale.ROOT);
+
+            String formattedPermission = "minecraft.command.gamemode.%s".formatted(gameModeName);
+            Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
+            Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
+            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
+
+            if (!ExtraConditions.hasPermission("minecraft.command.gamemode").canUse(player, null) &&
+                    !ExtraConditions.hasPermission(formattedPermission).canUse(player, null)) {
+                player.sendMessage(failedSelf);
+                return;
+            }
+
+            if(player.setGameMode(gameMode)){
+                player.sendMessage(successSelf);
+            }else{
+                player.sendMessage(failedSelf);
+            }
+        });
+    }
 
     private static class ExactGameModeCommand extends Command {
 
@@ -100,45 +140,12 @@ public class GameModeCommand extends Command {
 
     public GameModeCommand() {
         super("gamemode", "gmc", "gms", "gmsp", "gma");
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerCommandEvent.class, event -> {
-            if (!event.getCommand().contains(" "))
-                switch (event.getCommand()) {
-                    case "gmc", "gm1" -> event.setCommand("gamemode creative");
-                    case "gms", "gm0" -> event.setCommand("gamemode survival");
-                    case "gmsp", "gm3" -> event.setCommand("gamemode spectator");
-                    case "gma", "gm2" -> event.setCommand("gamemode adventure");
-                }
-        });
 
         setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.gamemode")));
-
-        MinecraftServer.getGlobalEventHandler().addListener(PlayerGameModeRequestEvent.class, event ->{
-            Player player = event.getPlayer();
-            GameMode gameMode = event.getRequestedGameMode();
-            String gameModeName = gameMode.name().toLowerCase(Locale.ROOT);
-
-            String formattedPermission = "minecraft.command.gamemode.%s".formatted(gameModeName);
-            Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
-            Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
-            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
-
-            if (!ExtraConditions.hasPermission("minecraft.command.gamemode").canUse(player, null) &&
-                    !ExtraConditions.hasPermission(formattedPermission).canUse(player, null)) {
-                player.sendMessage(failedSelf);
-                return;
-            }
-
-            if(player.setGameMode(gameMode)){
-                player.sendMessage(successSelf);
-            }else{
-                player.sendMessage(failedSelf);
-            }
-        });
 
         for (GameMode gameMode: GameMode.values()) {
             addSubcommand(new ExactGameModeCommand(gameMode));
         }
-
     }
 
 }

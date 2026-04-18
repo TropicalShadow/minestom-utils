@@ -22,18 +22,6 @@ public class InteractionEntity extends NoPhysicsEntity{
     public InteractionEntity(@NotNull Area.Cuboid cuboidRegion) {
         super(EntityType.INTERACTION);
         this.cuboidRegion = cuboidRegion;
-    }
-
-    protected void onEnter(@NotNull Player player) {
-        player.sendMessage("entered");
-    }
-
-    protected void onExit(@NotNull Player player) {
-        player.sendMessage("exited");
-    }
-
-    @Override
-    public void spawn() {
         PLAYER_MOVE_EVENT_NODE.addListener(PlayerMoveEvent.class, event ->{
             Pos oldPos = event.getPlayer().getPreviousPosition();
             Pos newPos = event.getNewPosition();
@@ -56,6 +44,18 @@ public class InteractionEntity extends NoPhysicsEntity{
                 this.onExit(event.getPlayer());
             }
         });
+    }
+
+    protected void onEnter(@NotNull Player player) {
+        player.sendMessage("entered");
+    }
+
+    protected void onExit(@NotNull Player player) {
+        player.sendMessage("exited");
+    }
+
+    @Override
+    public void spawn() {
         MinecraftServer.getGlobalEventHandler().addChild(PLAYER_MOVE_EVENT_NODE);
     }
 
