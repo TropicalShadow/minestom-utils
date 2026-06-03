@@ -31,6 +31,7 @@ public class PlaySoundCommand extends Command {
         PITCH_ARGUMENT.setDefaultValue(0.0f);
         PITCH_ARGUMENT.between(-1f, 1f);
         SOUND_ARGUMENT.setDefaultValue(SoundEvent.BLOCK_NOTE_BLOCK_HARP);
+        PLAYER_ARGUMENT.setDefaultValue(new EntityFinder().setTargetSelector(EntityFinder.TargetSelector.SELF));
     }
 
     public PlaySoundCommand() {
