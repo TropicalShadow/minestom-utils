@@ -4,6 +4,7 @@ import club.tesseract.minestom.utils.command.CommandCategory;
 import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
+import club.tesseract.minestom.utils.command.sender.CommandBlockSender;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.command.CommandSender;
@@ -20,6 +21,7 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.network.packet.server.play.ParticlePacket;
 import net.minestom.server.particle.Particle;
 import net.kyori.adventure.text.Component;
+import net.minestom.server.utils.location.RelativeVec;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,7 +35,7 @@ public class ParticleCommand extends Command {
 
     private static final ArgumentParticle PARTICLE_ARGUMENT = ArgumentType.Particle("particle");
     private static final ArgumentRelativeVec3 POSITION_ARGUMENT = ArgumentType.RelativeVec3("pos");
-    private static final ArgumentRelativeVec3 DELTA_ARGUMENT = ArgumentType.RelativeVec3("delta"); // TODO - consider the subtlety to having RelativeVec3 vs Vec3 :think:
+    private static final ArgumentRelativeVec3 DELTA_ARGUMENT = ArgumentType.RelativeVec3("delta");
     private static final ArgumentInteger COUNT_ARGUMENT = ArgumentType.Integer("count");
     private static final ArgumentFloat SPEED_ARGUMENT = ArgumentType.Float("speed");
     private static final PlayerArgument VIEWERS_ARGUMENT = new PlayerArgument("viewers", false);
@@ -83,10 +85,11 @@ public class ParticleCommand extends Command {
     private void executeWithPos(CommandSender sender, CommandContext context) {
         Particle particle = context.get("particle");
 
-        // TODO - consider cmd blocks
         Pos pos = Pos.ZERO;
         if(sender instanceof Player player) {
             pos = context.get(POSITION_ARGUMENT).from(player).asPos();
+        }else if(sender instanceof CommandBlockSender blockSender){
+            pos = context.get(POSITION_ARGUMENT).from(blockSender.getVec().asPos()).asPos();
         }
 
         Collection<Player> players = getAllPlayers(sender);
@@ -119,16 +122,20 @@ public class ParticleCommand extends Command {
 
     private void executeParticles(CommandSender sender, CommandContext context, boolean force, Collection<Player> viewers) {
         Particle particle = context.get("particle");
-        // TODO - consider cmd blocks
         Pos pos = Pos.ZERO;
+        RelativeVec delta = context.get("delta");
+        Vec deltaVec = Vec.ZERO;
         if(sender instanceof Player player) {
             pos = context.get(POSITION_ARGUMENT).from(player).asPos();
+            deltaVec = delta.from(player);
+        }else if(sender instanceof CommandBlockSender blockSender){
+            pos = context.get(POSITION_ARGUMENT).from(blockSender.getVec().asPos()).asPos();
+            deltaVec = delta.from(blockSender.getVec().asPos());
         }
-        Vec delta = context.get("delta");
         float speed = context.get("speed");
         int count = context.get("count");
 
-        sendParticles(sender, particle, pos, delta, speed, count, force, viewers);
+        sendParticles(sender, particle, pos, deltaVec, speed, count, force, viewers);
     }
 
     private void sendParticles(CommandSender sender, Particle particle, Pos pos,
