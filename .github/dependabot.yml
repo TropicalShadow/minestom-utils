@@ -26,3 +26,5 @@ updates:
       gradle:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "org.spongepowered:configurate-*"
