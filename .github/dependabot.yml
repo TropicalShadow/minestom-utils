@@ -9,6 +9,10 @@ updates:
     target-branch: "main"
     reviewers:
       - "TropicalShadow"
+    groups:
+      gradle:
+        patterns:
+          - "*"
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
@@ -18,3 +22,7 @@ updates:
     target-branch: "main"
     reviewers:
       - "TropicalShadow"
+    groups:
+      gradle:
+        patterns:
+          - "*"
