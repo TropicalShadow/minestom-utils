@@ -9,20 +9,20 @@ import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.minestom.server.adventure.MinestomAdventure;
+import net.minestom.server.ServerFlag;
 import org.intellij.lang.annotations.Subst;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 
 /**
  * @author TropicalShadow
- * @see MinestomAdventure#AUTOMATIC_COMPONENT_TRANSLATION
+ * @see ServerFlag#AUTOMATIC_COMPONENT_TRANSLATION
  */
 public final class LangUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(LangUtils.class);
@@ -30,11 +30,11 @@ public final class LangUtils {
 
     /**
      * Registers a resource bundle as a MiniMessage translation source for the given namespace.
-     * Automatically enables {@link MinestomAdventure#AUTOMATIC_COMPONENT_TRANSLATION} so that
+     * Automatically enables {@link ServerFlag#AUTOMATIC_COMPONENT_TRANSLATION} so that
      * {@link Component#translatable} components are rendered server-side before being sent to clients.
      */
     public static void registerLang(@Subst("gamemode") String namespace, String baseBundlePath, Locale... supportedLocales) {
-        MinestomAdventure.AUTOMATIC_COMPONENT_TRANSLATION = true;
+        System.setProperty("minestom.automatic-component-translation", "true"); // @see ServerFlag.AUTOMATIC_COMPONENT_TRANSLATION
         String resourcePath = baseBundlePath.replace('.', '/') + ".properties";
         if (LangUtils.class.getClassLoader().getResource(resourcePath) == null) {
             LOGGER.warn("WARNING: Resource not found: {}", resourcePath);
@@ -47,7 +47,7 @@ public final class LangUtils {
             return newTranslator;
         });
 
-        if(supportedLocales.length == 0){
+        if (supportedLocales.length == 0) {
             supportedLocales = new Locale[]{Locale.UK};
         }
         for (Locale locale : supportedLocales) {
