@@ -1,7 +1,7 @@
 package club.tesseract.minestom.utils.command.condition;
 
 
-import club.tesseract.minestom.utils.misc.PermissionHolder;
+import club.tesseract.minestom.utils.permission.PermissionHolder;
 import net.minestom.server.Auth;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.ConsoleSender;
@@ -10,7 +10,6 @@ import net.minestom.server.command.builder.condition.Conditions;
 import net.minestom.server.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,6 +1,6 @@
-package club.tesseract.minestom.utils.permission;
+package club.tesseract.minestom.utils.permission.lp;
 
-import club.tesseract.minestom.utils.misc.PermissionHolder;
+import club.tesseract.minestom.utils.permission.PermissionHolder;
 import club.tesseract.minestom.utils.permission.config.HoconConfigurationAdapter;
 import club.tesseract.minestom.utils.permission.event.PlayerPermissionsRecalculateEvent;
 import me.lucko.luckperms.common.config.generic.adapter.EnvironmentVariableConfigAdapter;

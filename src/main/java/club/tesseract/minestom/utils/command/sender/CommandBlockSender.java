@@ -1,10 +1,10 @@
 package club.tesseract.minestom.utils.command.sender;
 
 import lombok.Getter;
-import net.kyori.adventure.audience.MessageType;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.pointer.Pointers;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.ConsoleSender;
@@ -12,7 +12,6 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.tag.TagHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jspecify.annotations.NonNull;
 
 public final class CommandBlockSender implements CommandSender {
     private static final ComponentLogger LOGGER = ComponentLogger.logger(ConsoleSender.class);
@@ -36,13 +35,17 @@ public final class CommandBlockSender implements CommandSender {
     }
 
 
-    public Vec getVec(){
+    public Vec getVec() {
         return position;
     }
 
     @Override
-    public void sendMessage(Identity source, Component message, MessageType type) {
-        LOGGER.info(message);
+    public void sendMessage(@NotNull Component message) {
+        LOGGER.info(Component.join(
+                JoinConfiguration.spaces(),
+                DEFAULT_NAME,
+                message
+        ));
     }
 
     @Override
@@ -51,7 +54,7 @@ public final class CommandBlockSender implements CommandSender {
     }
 
     @Override
-    public @NonNull TagHandler tagHandler() {
+    public @NotNull TagHandler tagHandler() {
         return tagHandler;
     }
 

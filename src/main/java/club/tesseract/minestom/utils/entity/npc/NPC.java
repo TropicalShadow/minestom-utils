@@ -27,7 +27,6 @@ import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +46,7 @@ public abstract class NPC extends EntityCreature {
     static {
         EVENT_NODE.addListener(EntityDespawnEvent.class, event -> {
             if (!(event.getEntity() instanceof NPC npc)) return;
-            if(!NON_PLAYABLE_CHARACTERS.containsKey(npc.getEntityId())){
+            if (!NON_PLAYABLE_CHARACTERS.containsKey(npc.getEntityId())) {
                 return;
             }
             NON_PLAYABLE_CHARACTERS.remove(npc.getEntityId());
@@ -56,7 +55,7 @@ public abstract class NPC extends EntityCreature {
         EVENT_NODE.addListener(EntityAttackEvent.class, event -> {
             if (!(event.getEntity() instanceof Player)) return;
             if (!(event.getTarget() instanceof NPC npc)) return;
-            if(!NON_PLAYABLE_CHARACTERS.containsKey(event.getTarget().getEntityId())){
+            if (!NON_PLAYABLE_CHARACTERS.containsKey(event.getTarget().getEntityId())) {
                 return;
             }
             npc.handle(event);
@@ -65,7 +64,7 @@ public abstract class NPC extends EntityCreature {
         EVENT_NODE.addListener(PlayerEntityInteractEvent.class, event -> {
             if (event.getHand() == PlayerHand.OFF) return; // avoid duplicate call
             if (!(event.getTarget() instanceof NPC npc)) return;
-            if(!NON_PLAYABLE_CHARACTERS.containsKey(event.getTarget().getEntityId())){
+            if (!NON_PLAYABLE_CHARACTERS.containsKey(event.getTarget().getEntityId())) {
                 return;
             }
             npc.handle(event);
@@ -76,19 +75,41 @@ public abstract class NPC extends EntityCreature {
         super(entityType);
     }
 
-    public Component getName(){
-        return Objects.requireNonNullElse(get(DataComponents.CUSTOM_NAME), Component.text(entityType.name()));
+    /**
+     * Register an event to track interactions with NPCs.
+     *
+     * @param npcs a list of NPCs to register
+     * @see #unregister(NPC...)
+     */
+    public static synchronized void register(NPC... npcs) {
+        if (EVENT_NODE.getParent() == null) {
+            GlobalEventHandler eventHandler = MinecraftServer.getGlobalEventHandler();
+            eventHandler.addChild(EVENT_NODE);
+        }
+
+        for (NPC npc : npcs) {
+            if (NON_PLAYABLE_CHARACTERS.containsKey(npc.getEntityId())) {
+                log.warn("NPC {} already registered", npc.getEntityId());
+                continue;
+            }
+            NON_PLAYABLE_CHARACTERS.put(npc.getEntityId(), npc);
+        }
     }
 
-    public void lookClose(){
-        lookClose(15);
+    /**
+     * Removes the NPC from the registry
+     *
+     * @param npcs a list of NPCs to unregister
+     * @see #register(NPC...)
+     */
+    public static void unregister(NPC... npcs) {
+        for (NPC npc : npcs) {
+            NON_PLAYABLE_CHARACTERS.remove(npc.getEntityId());
+        }
     }
 
-    public void lookClose(int range){
-        addAIGroup(
-                List.of(new LookAtPlayerGoal(this)),
-                List.of(new ClosestEntityTarget(this, range, entity -> entity instanceof Player))
-        );
+    public static Collection<NPC> getNPCs() {
+        return Collections.unmodifiableCollection(NON_PLAYABLE_CHARACTERS.values());
     }
 
     public void speak(Audience audience, Component text) {
@@ -101,28 +122,19 @@ public abstract class NPC extends EntityCreature {
         audience.sendMessage(message);
     }
 
-    public void setInteract(@Nullable Consumer<InteractEvent<PlayerEntityInteractEvent>> consumer){
-        if(consumer == null) {
-            this.removeTag(RIGHT_CLICK_TAG);
-            return;
-        }
-        this.setTag(RIGHT_CLICK_TAG, consumer);
+    public Component getName() {
+        return Objects.requireNonNullElse(get(DataComponents.CUSTOM_NAME), Component.text(entityType.name()));
     }
 
-    public void setAttack(@Nullable Consumer<InteractEvent<EntityAttackEvent>> consumer){
-        if(consumer == null) {
-            this.removeTag(LEFT_CLICK_TAG);
-            return;
-        }
-        this.setTag(LEFT_CLICK_TAG, consumer);
+    public void lookClose() {
+        lookClose(15);
     }
 
-    public void setInteractSound(@Nullable Sound sound){
-        if(sound == null) {
-            this.removeTag(INTERACT_SOUND_TAG);
-            return;
-        }
-        this.setTag(INTERACT_SOUND_TAG, sound);
+    public void lookClose(int range) {
+        addAIGroup(
+                List.of(new LookAtPlayerGoal(this)),
+                List.of(new ClosestEntityTarget(this, range, entity -> entity instanceof Player))
+        );
     }
 
     public void handle(@NotNull EntityAttackEvent event) {
@@ -152,51 +164,38 @@ public abstract class NPC extends EntityCreature {
             this.getTag(RIGHT_CLICK_TAG).accept(new InteractEvent<>(event, this, player));
     }
 
+    public void setInteract(@Nullable Consumer<InteractEvent<PlayerEntityInteractEvent>> consumer) {
+        if (consumer == null) {
+            this.removeTag(RIGHT_CLICK_TAG);
+            return;
+        }
+        this.setTag(RIGHT_CLICK_TAG, consumer);
+    }
+
+    public void setAttack(@Nullable Consumer<InteractEvent<EntityAttackEvent>> consumer) {
+        if (consumer == null) {
+            this.removeTag(LEFT_CLICK_TAG);
+            return;
+        }
+        this.setTag(LEFT_CLICK_TAG, consumer);
+    }
+
+    public void setInteractSound(@Nullable Sound sound) {
+        if (sound == null) {
+            this.removeTag(INTERACT_SOUND_TAG);
+            return;
+        }
+        this.setTag(INTERACT_SOUND_TAG, sound);
+    }
+
     @Override
-    public CompletableFuture<Void> setInstance(@NonNull Instance instance, @NonNull Pos spawnPosition) {
+    public CompletableFuture<Void> setInstance(@NotNull Instance instance, @NotNull Pos spawnPosition) {
         register();
         return super.setInstance(instance, spawnPosition);
     }
 
-    public void register(){
+    public void register() {
         register(this);
-    }
-
-    /**
-     * Register an event to track interactions with NPCs.
-     *
-     * @see #unregister(NPC...)
-     * @param npcs a list of NPCs to register
-     */
-    public static synchronized void register(NPC... npcs){
-        if(EVENT_NODE.getParent() == null){
-            GlobalEventHandler eventHandler = MinecraftServer.getGlobalEventHandler();
-            eventHandler.addChild(EVENT_NODE);
-        }
-
-        for (NPC npc : npcs) {
-            if(NON_PLAYABLE_CHARACTERS.containsKey(npc.getEntityId())){
-                log.warn("NPC {} already registered", npc.getEntityId());
-                continue;
-            }
-            NON_PLAYABLE_CHARACTERS.put(npc.getEntityId(), npc);
-        }
-    }
-
-    /**
-     * Removes the NPC from the registry
-     *
-     * @see #register(NPC...)
-     * @param npcs a list of NPCs to unregister
-     */
-    public static void unregister(NPC... npcs){
-        for (NPC npc : npcs) {
-            NON_PLAYABLE_CHARACTERS.remove(npc.getEntityId());
-        }
-    }
-
-    public static Collection<NPC> getNPCs(){
-        return Collections.unmodifiableCollection(NON_PLAYABLE_CHARACTERS.values());
     }
 
     public record InteractEvent<T extends EntityInstanceEvent>(
