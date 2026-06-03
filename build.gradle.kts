@@ -9,7 +9,7 @@ version = System.getenv("TAG_VERSION") ?: "dev"
 repositories {
     mavenCentral()
     maven("https://repo.hypera.dev/snapshots/") // luckperms (minestom) & Spark
-    maven("https://repo.smolder.cloud/public/")
+    maven("https://repo.smolder.fr/public/") // axiom-minestom
 
     maven("https://repo.lucko.me/") // spark-common
     maven("https://oss.sonatype.org/content/repositories/snapshots/") // spark-common's dependencies
