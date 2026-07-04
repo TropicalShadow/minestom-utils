@@ -10,6 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PermissionGroup {
 
     @Getter
+    private final String id;
+
+    @Getter
     private final String name;
     @Getter
     private final int weight;
@@ -23,8 +26,14 @@ public class PermissionGroup {
     private final Map<String, String> meta = new ConcurrentHashMap<>();
 
     public PermissionGroup(String name, int weight) {
+        this(name, name, weight);
+    }
+
+    public PermissionGroup(String id, String name, int weight) {
+        this.id = id;
         this.name = name;
         this.weight = weight;
+        PermissionGroupRegistry.register(this);
     }
 
     public void inherit(PermissionGroup parent) {

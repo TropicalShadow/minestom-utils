@@ -3,6 +3,7 @@ package club.tesseract.minestom.utils.permission;
 import club.tesseract.minestom.utils.permission.cache.PermissionCache;
 import club.tesseract.minestom.utils.permission.event.PlayerPermissionsRecalculateEvent;
 import club.tesseract.minestom.utils.permission.group.PermissionGroup;
+import club.tesseract.minestom.utils.permission.group.PermissionGroupRegistry;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
@@ -21,23 +22,13 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
     private final PermissionNode root = new PermissionNode();
 
-    private final Set<PermissionGroup> groups = ConcurrentHashMap.newKeySet();
+    private final Set<String> groupIds = ConcurrentHashMap.newKeySet();
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor(r -> new Thread(r, "perm-recalc"));
     private volatile PermissionCache cache = new PermissionCache();
 
     public DefaultPermissionHolder(Player player) {
         this.player = player;
-    }
-
-    public void addGroup(PermissionGroup group) {
-        groups.add(group);
-        recalcAsync();
-    }
-
-    public void removeGroup(PermissionGroup group) {
-        groups.remove(group);
-        recalcAsync();
     }
 
     @Override
@@ -51,25 +42,6 @@ public class DefaultPermissionHolder implements PermissionHolder {
     }
 
     @Override
-    public @NotNull Set<PermissionGroup> getGroups() {
-        return Collections.unmodifiableSet(groups);
-    }
-
-    @Override
-    public void setGroups(@NotNull Set<PermissionGroup> groups) {
-        this.groups.clear();
-        this.groups.addAll(groups);
-        recalcAsync();
-    }
-
-    @Override
-    public @Nullable PermissionGroup getPrimaryGroup() {
-        return groups.stream()
-                .max(Comparator.comparingInt(PermissionGroup::getWeight))
-                .orElse(null);
-    }
-
-    @Override
     public @NotNull CompletableFuture<SetPermissionResult> setPermission(String permission, Boolean value) {
 
         TriState state =
@@ -77,7 +49,22 @@ public class DefaultPermissionHolder implements PermissionHolder {
                         Boolean.FALSE.equals(value) ? TriState.FALSE :
                         TriState.DEFAULT;
 
-        apply(root, permission.toLowerCase(), state);
+        String normalized = permission.toLowerCase();
+        if (normalized.startsWith("group.")) {
+            String groupId = normalized.substring("group.".length());
+            PermissionGroup group = PermissionGroupRegistry.get(groupId);
+            if (group != null) {
+                if (state == TriState.TRUE) {
+                    groupIds.add(group.getId().toLowerCase());
+                } else {
+                    groupIds.remove(group.getId().toLowerCase());
+                }
+                recalcAsync();
+                return CompletableFuture.completedFuture(new SetPermissionResult(true, null, group));
+            }
+        }
+
+        apply(root, normalized, state);
 
         recalcAsync();
 
@@ -112,6 +99,7 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
         flattenTree(root, "", newCache.permissions);
 
+        List<PermissionGroup> groups = resolveGroups();
         List<PermissionGroup> sorted = new ArrayList<>(groups);
         sorted.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
 
@@ -163,7 +151,7 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
         String best = null;
 
-        List<PermissionGroup> sorted = new ArrayList<>(groups);
+        List<PermissionGroup> sorted = new ArrayList<>(resolveGroups());
         sorted.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
 
         for (PermissionGroup group : sorted) {
@@ -171,6 +159,17 @@ public class DefaultPermissionHolder implements PermissionHolder {
         }
 
         return best;
+    }
+
+    private List<PermissionGroup> resolveGroups() {
+        List<PermissionGroup> groups = new ArrayList<>();
+        for (String id : groupIds) {
+            PermissionGroup group = PermissionGroupRegistry.get(id);
+            if (group != null) {
+                groups.add(group);
+            }
+        }
+        return groups;
     }
 
     private String resolveGroupMeta(
