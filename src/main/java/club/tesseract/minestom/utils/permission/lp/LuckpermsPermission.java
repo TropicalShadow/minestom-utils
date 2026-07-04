@@ -56,7 +56,6 @@ public final class LuckpermsPermission {
     void playerDataLoad(AsyncPlayerConfigurationEvent event){
         if(!event.isFirstConfig())return;
         if(!(event.getPlayer() instanceof PermissionHolder permissionHolder)) return;
-        permissionHolder.onPermissionUserLoad();
     }
 
     void recalculatePlayerEvent(UserDataRecalculateEvent event) {
@@ -67,8 +66,7 @@ public final class LuckpermsPermission {
                 if(!(player instanceof PermissionHolder permissionHolder)) {
                     return;
                 }
-                permissionHolder.onPermissionRecalculate();
-                PlayerPermissionsRecalculateEvent recalculateEvent = new PlayerPermissionsRecalculateEvent(player, event);
+                PlayerPermissionsRecalculateEvent recalculateEvent = new PlayerPermissionsRecalculateEvent(player);
                 EventDispatcher.call(recalculateEvent);
             } );
         });

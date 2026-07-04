@@ -10,29 +10,12 @@ import java.util.concurrent.CompletableFuture;
 public interface PermissionHolder extends NamedAndIdentified, Audience {
 
 
+    @Nullable String getSuffix();
 
-    @Nullable
-    String getSuffix();
-
-    @Nullable
-    String getPrefix();
+    @Nullable String getPrefix();
 
     @NotNull
-    CompletableFuture<@NotNull SetPermissionResult> setPermission(String permission, boolean value);
-
-    /**
-     * Override for custom permission user loading logic.
-     */
-    default void onPermissionUserLoad(){
-
-    }
-
-    /**
-     * Override for custom permission recalculation logic.
-     */
-    default void onPermissionRecalculate() {
-
-    }
+    CompletableFuture<SetPermissionResult> setPermission(String permission, @Nullable Boolean value);
 
     /**
      * Checks if this holder has a specific permission.
