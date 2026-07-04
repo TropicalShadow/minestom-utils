@@ -9,8 +9,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PermissionGroup {
 
-    @Getter
     private final String id;
+
+    public String getId() {
+        return id;
+    }
 
     @Getter
     private final String name;
