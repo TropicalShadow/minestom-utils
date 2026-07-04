@@ -1,10 +1,12 @@
 package club.tesseract.minestom.utils.permission;
 
+import club.tesseract.minestom.utils.permission.group.PermissionGroup;
 import net.kyori.adventure.audience.Audience;
 import net.minestom.server.utils.identity.NamedAndIdentified;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface PermissionHolder extends NamedAndIdentified, Audience {
@@ -13,6 +15,12 @@ public interface PermissionHolder extends NamedAndIdentified, Audience {
     @Nullable String getSuffix();
 
     @Nullable String getPrefix();
+
+    @NotNull Set<PermissionGroup> getGroups();
+
+    void setGroups(@NotNull Set<PermissionGroup> groups);
+
+    @Nullable PermissionGroup getPrimaryGroup();
 
     @NotNull
     CompletableFuture<SetPermissionResult> setPermission(String permission, @Nullable Boolean value);

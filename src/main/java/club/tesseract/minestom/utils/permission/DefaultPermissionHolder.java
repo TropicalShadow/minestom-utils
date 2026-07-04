@@ -3,7 +3,6 @@ package club.tesseract.minestom.utils.permission;
 import club.tesseract.minestom.utils.permission.cache.PermissionCache;
 import club.tesseract.minestom.utils.permission.event.PlayerPermissionsRecalculateEvent;
 import club.tesseract.minestom.utils.permission.group.PermissionGroup;
-import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
@@ -22,21 +21,13 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
     private final PermissionNode root = new PermissionNode();
 
-    @Getter
     private final Set<PermissionGroup> groups = ConcurrentHashMap.newKeySet();
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor(r -> new Thread(r, "perm-recalc"));
-    @Getter
-    private volatile PermissionGroup primaryGroup;
     private volatile PermissionCache cache = new PermissionCache();
 
     public DefaultPermissionHolder(Player player) {
         this.player = player;
-    }
-
-    public void setPrimaryGroup(PermissionGroup group) {
-        this.primaryGroup = group;
-        recalcAsync();
     }
 
     public void addGroup(PermissionGroup group) {
@@ -60,6 +51,25 @@ public class DefaultPermissionHolder implements PermissionHolder {
     }
 
     @Override
+    public @NotNull Set<PermissionGroup> getGroups() {
+        return Collections.unmodifiableSet(groups);
+    }
+
+    @Override
+    public void setGroups(@NotNull Set<PermissionGroup> groups) {
+        this.groups.clear();
+        this.groups.addAll(groups);
+        recalcAsync();
+    }
+
+    @Override
+    public @Nullable PermissionGroup getPrimaryGroup() {
+        return groups.stream()
+                .max(Comparator.comparingInt(PermissionGroup::getWeight))
+                .orElse(null);
+    }
+
+    @Override
     public @NotNull CompletableFuture<SetPermissionResult> setPermission(String permission, Boolean value) {
 
         TriState state =
@@ -80,7 +90,7 @@ public class DefaultPermissionHolder implements PermissionHolder {
         String[] parts = permission.split("\\.");
 
         for (String part : parts) {
-            node = node.children.computeIfAbsent(part, k -> new PermissionNode());
+            node = node.children.computeIfAbsent(part, ignored -> new PermissionNode());
         }
 
         node.value = value;
@@ -101,10 +111,6 @@ public class DefaultPermissionHolder implements PermissionHolder {
         PermissionCache newCache = new PermissionCache();
 
         flattenTree(root, "", newCache.permissions);
-
-        if (primaryGroup != null) {
-            resolveGroup(primaryGroup, newCache, new HashSet<>());
-        }
 
         List<PermissionGroup> sorted = new ArrayList<>(groups);
         sorted.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
@@ -156,10 +162,6 @@ public class DefaultPermissionHolder implements PermissionHolder {
     private String resolveMeta(String key) {
 
         String best = null;
-
-        if (primaryGroup != null) {
-            best = resolveGroupMeta(primaryGroup, key, best, new HashSet<>());
-        }
 
         List<PermissionGroup> sorted = new ArrayList<>(groups);
         sorted.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
