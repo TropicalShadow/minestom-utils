@@ -75,7 +75,6 @@ public final class TestServer {
             event.getPlayer().sendMessage(MiniMessageHelper.toComponent("<gold>hello, %s", "world"));
             event.getPlayer().sendMessage(Component.translatable("demo.welcome").arguments(Objects.requireNonNullElse(event.getPlayer().getDisplayName(), Component.text(event.getPlayer().getUsername()))));
             if (event.getPlayer() instanceof PermissionHolder permissionHolder) {
-                permissionHolder.onPermissionUserLoad();
                 permissionHolder.setPermission("*", true);
                 event.getPlayer().setPermissionLevel(4);
                 event.getPlayer().refreshCommands();

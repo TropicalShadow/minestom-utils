@@ -61,7 +61,7 @@ public final class LuckpermsPermissionHolder implements PermissionHolder {
     }
 
     @Override
-    public @NotNull CompletableFuture<@NotNull SetPermissionResult> setPermission(String permission, boolean value) {
+    public @NotNull CompletableFuture<@NotNull SetPermissionResult> setPermission(String permission, @Nullable Boolean value) {
         DataMutateResult result = getLuckpermsUser().data().add(Node.builder(permission).value(value).build());
 
         return luckperms().getUserManager().saveUser(getLuckpermsUser()).thenApply((ignored) -> new SetPermissionResult(result.wasSuccessful(), "luckperms handling", result));
