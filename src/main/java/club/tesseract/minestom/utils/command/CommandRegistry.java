@@ -35,6 +35,8 @@ public final class CommandRegistry {
         registerCommand(new TpsCommand());
         registerCommand(new TeleportCommand());
         registerCommand(new GameModeCommand());
+        GameModeCommand.getShortcutCommands().forEach(cmd ->
+                MinecraftServer.getCommandManager().register(cmd));
         registerCommand(new FlyCommand());
         registerCommand(new HealCommand());
         registerCommand(new NukeCommand());

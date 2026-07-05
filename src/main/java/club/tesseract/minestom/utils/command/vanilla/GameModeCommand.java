@@ -13,7 +13,6 @@ import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventFilter;
 import net.minestom.server.event.EventNode;
-import net.minestom.server.event.player.PlayerCommandEvent;
 import net.minestom.server.event.player.PlayerGameModeRequestEvent;
 import net.minestom.server.event.trait.PlayerEvent;
 import net.minestom.server.utils.entity.EntityFinder;
@@ -32,16 +31,6 @@ public class GameModeCommand extends Command {
     private final static EventNode<PlayerEvent> eventNode = EventNode.type("gamemode-command-events", EventFilter.PLAYER);
 
     static{
-        eventNode.addListener(PlayerCommandEvent.class, event -> {
-            if (!event.getCommand().contains(" "))
-                switch (event.getCommand()) {
-                    case "gmc", "gm1" -> event.setCommand("gamemode creative");
-                    case "gms", "gm0" -> event.setCommand("gamemode survival");
-                    case "gmsp", "gm3" -> event.setCommand("gamemode spectator");
-                    case "gma", "gm2" -> event.setCommand("gamemode adventure");
-                }
-        });
-
         eventNode.addListener(PlayerGameModeRequestEvent.class, event ->{
             Player player = event.getPlayer();
             GameMode gameMode = event.getRequestedGameMode();
@@ -64,6 +53,51 @@ public class GameModeCommand extends Command {
                 player.sendMessage(failedSelf);
             }
         });
+    }
+
+    public static class ShortcutGameModeCommand extends Command {
+
+        public ShortcutGameModeCommand(String name, GameMode gameMode) {
+            super(name);
+            setup(gameMode);
+        }
+
+        private void setup(GameMode gameMode) {
+            String gameModeName = gameMode.name().toLowerCase(Locale.ROOT);
+            String formattedPermission = "minecraft.command.gamemode.%s".formatted(gameModeName);
+
+            setCondition(ExtraConditions.orOp(
+                    ExtraConditions.hasPermission("minecraft.command.gamemode"),
+                    ExtraConditions.hasPermission(formattedPermission)
+            ));
+
+            setDefaultExecutor((sender, context) -> {
+                if (!(sender instanceof Player player)) return;
+
+                Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
+                Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
+                Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
+
+                if (player.setGameMode(gameMode)) {
+                    player.sendMessage(successSelf);
+                } else {
+                    player.sendMessage(failedSelf);
+                }
+            });
+        }
+    }
+
+    public static List<Command> getShortcutCommands() {
+        return List.of(
+                new ShortcutGameModeCommand("gms", GameMode.SURVIVAL),
+                new ShortcutGameModeCommand("gm0", GameMode.SURVIVAL),
+                new ShortcutGameModeCommand("gmc", GameMode.CREATIVE),
+                new ShortcutGameModeCommand("gm1", GameMode.CREATIVE),
+                new ShortcutGameModeCommand("gma", GameMode.ADVENTURE),
+                new ShortcutGameModeCommand("gm2", GameMode.ADVENTURE),
+                new ShortcutGameModeCommand("gmsp", GameMode.SPECTATOR),
+                new ShortcutGameModeCommand("gm3", GameMode.SPECTATOR)
+        );
     }
 
     private static class ExactGameModeCommand extends Command {
@@ -139,13 +173,15 @@ public class GameModeCommand extends Command {
     }
 
     public GameModeCommand() {
-        super("gamemode", "gmc", "gms", "gmsp", "gma");
+        super("gamemode");
 
         setCondition(ExtraConditions.orOp(ExtraConditions.hasPermission("minecraft.command.gamemode")));
 
-        for (GameMode gameMode: GameMode.values()) {
+        for (GameMode gameMode : GameMode.values()) {
             addSubcommand(new ExactGameModeCommand(gameMode));
         }
+
+        MinecraftServer.getGlobalEventHandler().addChild(eventNode);
     }
 
 }
