@@ -71,6 +71,13 @@ public class GameModeCommand extends Command {
         public ExactGameModeCommand(GameMode gameMode) {
             super(gameMode.name().toLowerCase(Locale.ROOT));
 
+            String formattedPermission = "minecraft.command.gamemode.%s".formatted(getName());
+
+            setCondition(ExtraConditions.orOp(
+                    ExtraConditions.hasPermission("minecraft.command.gamemode"),
+                    ExtraConditions.hasPermission(formattedPermission)
+            ));
+
             EntityFinder defaultEntityFinder = new EntityFinder();
             defaultEntityFinder.setTargetSelector(EntityFinder.TargetSelector.SELF);
             var playerArgument = ArgumentType
@@ -78,18 +85,11 @@ public class GameModeCommand extends Command {
                     .onlyPlayers(true)
                     .setDefaultValue(defaultEntityFinder);
 
-            String formattedPermission = "minecraft.command.gamemode.%s".formatted(getName());
             Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
 
             addSyntax((sender, context) -> {
                 EntityFinder playerFinder = context.get(playerArgument);
                 List<Entity> entities = playerFinder.find(sender);
-
-                if (!ExtraConditions.hasPermission("minecraft.command.gamemode").canUse(sender, null) &&
-                        !ExtraConditions.hasPermission(formattedPermission).canUse(sender, null)) {
-                    sender.sendMessage(failedSelf);
-                    return;
-                }
 
                 Component gameModeComponent = Component.translatable("gameMode.%s".formatted(getName())).color(NamedTextColor.WHITE);
                 Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);

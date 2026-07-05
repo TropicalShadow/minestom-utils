@@ -85,7 +85,39 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
     @Override
     public TriState hasPermission(String permission) {
-        return cache.permissions.getOrDefault(permission.toLowerCase(), TriState.DEFAULT);
+        String normalized = permission.toLowerCase();
+        Map<String, TriState> perms = cache.permissions;
+
+        // Direct match first
+        TriState direct = perms.get(normalized);
+        if (direct != null && direct != TriState.DEFAULT) {
+            return direct;
+        }
+
+        // Check wildcard parents: command.test.foo -> command.test.* -> command.* -> *
+        String[] parts = normalized.split("\\.");
+        for (int i = parts.length - 1; i >= 0; i--) {
+            StringBuilder wildcard = new StringBuilder();
+            for (int j = 0; j < i; j++) {
+                if (j > 0) wildcard.append(".");
+                wildcard.append(parts[j]);
+            }
+            if (wildcard.length() > 0) wildcard.append(".");
+            wildcard.append("*");
+
+            TriState wildcardResult = perms.get(wildcard.toString());
+            if (wildcardResult != null && wildcardResult != TriState.DEFAULT) {
+                return wildcardResult;
+            }
+        }
+
+        // Check global wildcard
+        TriState globalWildcard = perms.get("*");
+        if (globalWildcard != null && globalWildcard != TriState.DEFAULT) {
+            return globalWildcard;
+        }
+
+        return direct != null ? direct : TriState.DEFAULT;
     }
 
 
