@@ -1,8 +1,8 @@
 [versions]
 lombok = "1.18.46"
-minestom = "2026.06.20-26.1.2"
+minestom = "2026.07.01-26.1.2"
 slf4j = "2.0.18"
-logback = "1.5.35"
+logback = "1.5.37"
 luckperms = "5.5-SNAPSHOT"
 configurate = "3.7.3"
 hikari = "7.1.0"
