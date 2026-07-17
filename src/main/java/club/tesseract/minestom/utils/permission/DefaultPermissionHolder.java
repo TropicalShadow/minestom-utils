@@ -43,7 +43,7 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
     @Override
     public @NotNull CompletableFuture<SetPermissionResult> setPermission(String permission, Boolean value) {
-
+        // TODO - correctly handle null value as unset permission node, remove from tree
         TriState state =
                 Boolean.TRUE.equals(value) ? TriState.TRUE :
                         Boolean.FALSE.equals(value) ? TriState.FALSE :
@@ -131,12 +131,11 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
         flattenTree(root, "", newCache.permissions);
 
-        List<PermissionGroup> groups = resolveGroups();
-        List<PermissionGroup> sorted = new ArrayList<>(groups);
-        sorted.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
+        List<PermissionGroup> allGroups = collectAllGroups(resolveGroups());
+        allGroups.sort(Comparator.comparingInt(PermissionGroup::getWeight));
 
-        for (PermissionGroup group : sorted) {
-            resolveGroup(group, newCache, new HashSet<>());
+        for (PermissionGroup group : allGroups) {
+            flattenTree(group.getRoot(), "", newCache.permissions);
         }
 
         newCache.prefix = resolveMeta("prefix");
@@ -149,15 +148,19 @@ public class DefaultPermissionHolder implements PermissionHolder {
     }
 
 
-    private void resolveGroup(PermissionGroup group, PermissionCache cache, Set<String> visited) {
-
-        if (!visited.add(group.getName())) return; // cycle protection
-
-        flattenTree(group.getRoot(), "", cache.permissions);
-
-        for (PermissionGroup parent : group.getParents()) {
-            resolveGroup(parent, cache, visited);
+    private List<PermissionGroup> collectAllGroups(List<PermissionGroup> topGroups) {
+        Set<String> visited = new HashSet<>();
+        List<PermissionGroup> all = new ArrayList<>();
+        Deque<PermissionGroup> stack = new ArrayDeque<>(topGroups);
+        while (!stack.isEmpty()) {
+            PermissionGroup group = stack.pop();
+            if (!visited.add(group.getId())) continue;
+            all.add(group);
+            for (PermissionGroup parent : group.getParents()) {
+                stack.push(parent);
+            }
         }
+        return all;
     }
 
     private void flattenTree(PermissionNode node, String prefix, Map<String, TriState> out) {
@@ -183,11 +186,14 @@ public class DefaultPermissionHolder implements PermissionHolder {
 
         String best = null;
 
-        List<PermissionGroup> sorted = new ArrayList<>(resolveGroups());
-        sorted.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
+        List<PermissionGroup> allGroups = collectAllGroups(resolveGroups());
+        allGroups.sort((a, b) -> Integer.compare(b.getWeight(), a.getWeight()));
 
-        for (PermissionGroup group : sorted) {
-            best = resolveGroupMeta(group, key, best, new HashSet<>());
+        for (PermissionGroup group : allGroups) {
+            String value = group.getMeta(key);
+            if (value != null) {
+                best = value;
+            }
         }
 
         return best;
@@ -202,27 +208,6 @@ public class DefaultPermissionHolder implements PermissionHolder {
             }
         }
         return groups;
-    }
-
-    private String resolveGroupMeta(
-            PermissionGroup group,
-            String key,
-            @Nullable String current,
-            Set<String> visited
-    ) {
-        if (!visited.add(group.getName())) return current;
-
-        String value = group.getMeta(key);
-
-        if (value != null) {
-            current = value;
-        }
-
-        for (PermissionGroup parent : group.getParents()) {
-            current = resolveGroupMeta(parent, key, current, visited);
-        }
-
-        return current;
     }
 
     @Override

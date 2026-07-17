@@ -1,8 +1,10 @@
 package club.tesseract.minestom.utils.permission.group;
 
 import club.tesseract.minestom.utils.permission.PermissionNode;
+import club.tesseract.minestom.utils.permission.TriState;
 import lombok.Getter;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +39,15 @@ public class PermissionGroup {
         this.name = name;
         this.weight = weight;
         PermissionGroupRegistry.register(this);
+    }
+
+
+    public void setPermission(String permission, TriState value) {
+        PermissionNode node = root;
+        for (String part : permission.toLowerCase(Locale.ROOT).split("\\.")) {
+            node = node.children.computeIfAbsent(part, k -> new PermissionNode());
+        }
+        node.setValue(value);
     }
 
     public void inherit(PermissionGroup parent) {

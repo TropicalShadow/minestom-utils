@@ -51,7 +51,7 @@ public final class TestServer {
             MinecraftServer.getSchedulerManager().buildShutdownTask(perms::shutdown);
             isLuckpermissionWorking = true;
         } catch (NoClassDefFoundError e) {
-            log.error("LuckPerms failed to initialize, permissions will not work", e);
+            log.error("LuckPerms failed to initialize, permissions will fallback to default", e);
         }
         LangUtils.registerLang("demo", "demo.demo", Locale.ENGLISH);
 
