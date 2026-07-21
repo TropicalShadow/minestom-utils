@@ -13,6 +13,7 @@ repositories {
 
     maven("https://repo.lucko.me/") // spark-common
     maven("https://oss.sonatype.org/content/repositories/snapshots/") // spark-common's dependencies
+    maven("https://repo.minestom-united.dev/releases/") // CatchAll :)
 }
 
 dependencies {
