@@ -7,6 +7,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.builder.Command;
+import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.GameMode;
@@ -119,57 +120,70 @@ public class GameModeCommand extends Command {
                     .onlyPlayers(true)
                     .setDefaultValue(defaultEntityFinder);
 
-            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
-
             addSyntax((sender, context) -> {
                 EntityFinder playerFinder = context.get(playerArgument);
-                List<Entity> entities = playerFinder.find(sender);
-
-                Component gameModeComponent = Component.translatable("gameMode.%s".formatted(getName())).color(NamedTextColor.WHITE);
-                Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
-                boolean collectiveSenderReply = entities.size() > 1;
-                AtomicInteger successfullyChanges = new AtomicInteger(0);
-                entities.forEach(entity -> {
-                    if (!(entity instanceof Player player)) return;
-
-                    if(player.setGameMode(gameMode)){
-                        if (entity == sender) {
-                            sender.sendMessage(successSelf);
-                        } else {
-                            player.sendMessage(
-                                    Component.translatable("gameMode.changed")
-                                            .arguments(gameModeComponent)
-                                            .color(NamedTextColor.GRAY)
-                            );
-
-                            if(!collectiveSenderReply) {
-                                sender.sendMessage(Component.translatable(
-                                        "commands.gamemode.success.other",
-                                        Objects.requireNonNullElse(
-                                                player.getDisplayName(),
-                                                player.getName()
-                                        ),
-                                        gameModeComponent));
-                            }
-                        }
-                        successfullyChanges.incrementAndGet();
-                    }else {
-                        if(entity == sender) {
-                            sender.sendMessage(failedSelf);
-                        }
-                    }
-                });
-                if(collectiveSenderReply){
-                    sender.sendMessage(Component.translatable(
-                            "commands.gamemode.success.other",
-                            Component.text(successfullyChanges.get()).append(Component.translatable("entity.minecraft.player")),
-                            gameModeComponent
-                    ));
-                }
+                applyGameMode(sender, playerFinder.find(sender), gameMode);
             }, playerArgument);
 
         }
 
+    }
+
+    private static void applyGameMode(CommandSender sender, List<Entity> entities, GameMode gameMode) {
+        String gameModeName = gameMode.name().toLowerCase(Locale.ROOT);
+        Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
+        Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
+        Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
+
+        boolean collectiveSenderReply = entities.size() > 1;
+        AtomicInteger successfullyChanges = new AtomicInteger(0);
+        entities.forEach(entity -> {
+            if (!(entity instanceof Player player)) return;
+
+            if(player.setGameMode(gameMode)){
+                if (entity == sender) {
+                    sender.sendMessage(successSelf);
+                } else {
+                    player.sendMessage(
+                            Component.translatable("gameMode.changed")
+                                    .arguments(gameModeComponent)
+                                    .color(NamedTextColor.GRAY)
+                    );
+
+                    if(!collectiveSenderReply) {
+                        sender.sendMessage(Component.translatable(
+                                "commands.gamemode.success.other",
+                                Objects.requireNonNullElse(
+                                        player.getDisplayName(),
+                                        player.getName()
+                                ),
+                                gameModeComponent));
+                    }
+                }
+                successfullyChanges.incrementAndGet();
+            }else {
+                if(entity == sender) {
+                    sender.sendMessage(failedSelf);
+                }
+            }
+        });
+        if(collectiveSenderReply){
+            sender.sendMessage(Component.translatable(
+                    "commands.gamemode.success.other",
+                    Component.text(successfullyChanges.get()).append(Component.translatable("entity.minecraft.player")),
+                    gameModeComponent
+            ));
+        }
+    }
+
+    private static GameMode gameModeFromAlias(String alias) {
+        return switch (alias.toLowerCase(Locale.ROOT)) {
+            case "s", "survival", "0" -> GameMode.SURVIVAL;
+            case "c", "creative", "1" -> GameMode.CREATIVE;
+            case "a", "adventure", "2" -> GameMode.ADVENTURE;
+            case "sp", "spectator", "3" -> GameMode.SPECTATOR;
+            default -> null;
+        };
     }
 
     public GameModeCommand() {
@@ -180,6 +194,31 @@ public class GameModeCommand extends Command {
         for (GameMode gameMode : GameMode.values()) {
             addSubcommand(new ExactGameModeCommand(gameMode));
         }
+
+        var modeArgument = ArgumentType.Word("mode")
+                .from("s", "survival", "0", "c", "creative", "1", "a", "adventure", "2", "sp", "spectator", "3");
+
+        EntityFinder defaultEntityFinder = new EntityFinder();
+        defaultEntityFinder.setTargetSelector(EntityFinder.TargetSelector.SELF);
+        var playerArgument = ArgumentType
+                .Entity("player")
+                .onlyPlayers(true)
+                .setDefaultValue(defaultEntityFinder);
+
+        addSyntax((sender, context) -> {
+            GameMode gameMode = gameModeFromAlias(context.get(modeArgument));
+            if (gameMode == null) return;
+
+            String formattedPermission = "minecraft.command.gamemode.%s".formatted(gameMode.name().toLowerCase(Locale.ROOT));
+            if (sender instanceof Player player &&
+                    !ExtraConditions.hasPermission("minecraft.command.gamemode").canUse(player, null) &&
+                    !ExtraConditions.hasPermission(formattedPermission).canUse(player, null)) {
+                sender.sendMessage(Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY));
+                return;
+            }
+
+            applyGameMode(sender, context.get(playerArgument).find(sender), gameMode);
+        }, modeArgument, playerArgument);
 
         MinecraftServer.getGlobalEventHandler().addChild(eventNode);
     }
