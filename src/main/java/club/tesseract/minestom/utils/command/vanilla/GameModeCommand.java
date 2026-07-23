@@ -19,6 +19,7 @@ import net.minestom.server.utils.entity.EntityFinder;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -71,7 +72,7 @@ public class GameModeCommand extends Command {
                     ExtraConditions.hasPermission(formattedPermission)
             ));
 
-            setDefaultExecutor((sender, context) -> {
+            setDefaultExecutor((sender, _) -> {
                 if (!(sender instanceof Player player)) return;
 
                 Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
@@ -102,8 +103,15 @@ public class GameModeCommand extends Command {
 
     private static class ExactGameModeCommand extends Command {
 
+        private static final Map<GameMode, String[]> SHORTHAND_COMMANDS = Map.of(
+                GameMode.SURVIVAL, new String[]{"s", "0"},
+                GameMode.CREATIVE, new String[]{"c", "1"},
+                GameMode.ADVENTURE, new String[]{"a", "2"},
+                GameMode.SPECTATOR, new String[]{"sp", "3"}
+        );
+
         public ExactGameModeCommand(GameMode gameMode) {
-            super(gameMode.name().toLowerCase(Locale.ROOT));
+            super(gameMode.name().toLowerCase(Locale.ROOT), SHORTHAND_COMMANDS.get(gameMode));
 
             String formattedPermission = "minecraft.command.gamemode.%s".formatted(getName());
 
