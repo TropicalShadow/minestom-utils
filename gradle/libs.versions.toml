@@ -3,7 +3,7 @@ lombok = "1.18.46"
 minestom = "2026.07.22-26.2"
 slf4j = "2.0.18"
 logback = "1.5.38"
-luckperms = "5.5-SNAPSHOT"
+luckperms = "5.5+26.2-SNAPSHOT"
 configurate = "3.7.3"
 hikari = "7.1.0"
 h2database = "2.4.240"
@@ -20,7 +20,8 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 minestom = { module = "net.minestom:minestom", version.ref = "minestom" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-luckperms = { module = "dev.lu15:luckperms-minestom", version.ref = "luckperms" }
+luckperms-api = { module = "club.tesseract:luckperms-api", version.ref = "luckperms" }
+luckperms = { module = "club.tesseract:luckperms-minestom", version.ref = "luckperms" }
 sponge-configurate-core = { module = "org.spongepowered:configurate-core", version.ref = "configurate" }
 sponge-configurate-hocon = { module = "org.spongepowered:configurate-hocon", version.ref = "configurate" }
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }

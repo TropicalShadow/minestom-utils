@@ -18,7 +18,6 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.EventFilter;
 import net.minestom.server.event.EventNode;
-import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.trait.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,18 +43,12 @@ public final class LuckpermsPermission {
                 })
                 .enable();
         luckPerms.getEventBus().subscribe(UserDataRecalculateEvent.class, this::recalculatePlayerEvent);
-        eventNode.addListener(AsyncPlayerConfigurationEvent.class, this::playerDataLoad);
         MinecraftServer.getGlobalEventHandler().addChild(eventNode);
     }
 
     public void shutdown() {
         this.luckPermsPlugin.disable();
         MinecraftServer.getGlobalEventHandler().removeChild(eventNode);
-    }
-
-    void playerDataLoad(AsyncPlayerConfigurationEvent event){
-        if(!event.isFirstConfig())return;
-        if(!(event.getPlayer() instanceof PermissionHolder permissionHolder)) return;
     }
 
     void recalculatePlayerEvent(UserDataRecalculateEvent event) {
