@@ -3,9 +3,11 @@ package club.tesseract.minestom.utils.instance.dimension;
 
 import lombok.Getter;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.world.DimensionType;
+import net.minestom.server.world.attribute.EnvironmentAttribute;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +27,11 @@ public final class FullBrightDimension {
 
 
     private FullBrightDimension() {
-        type = DimensionType.builder().ambientLight(1.0f).skylight(true).build();
+        type = DimensionType.builder()
+                .ambientLight(1.0f)
+                .skylight(true)
+                .setAttribute(EnvironmentAttribute.AMBIENT_LIGHT_COLOR, NamedTextColor.WHITE)
+                .build();
         registryKeyDimension = MinecraftServer.getDimensionTypeRegistry().register(getKey(), type);
     }
 
