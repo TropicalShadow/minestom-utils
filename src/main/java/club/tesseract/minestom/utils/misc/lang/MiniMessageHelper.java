@@ -1,21 +1,58 @@
 package club.tesseract.minestom.utils.misc.lang;
 
 import net.kyori.adventure.text.Component;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.PrintFormat;
 
 public enum MiniMessageHelper {
     ;
-    public static final MiniMessage MINI_MESSAGE = MiniMessage.builder()
-            .editTags(builder -> {
-                builder.tag("danger", Tag.preProcessParsed("<red>× "));
-                builder.tag("info", Tag.preProcessParsed("<gray>• "));
-                builder.tag("success", Tag.preProcessParsed("<green>✓ "));
-                builder.tag("warning", Tag.preProcessParsed("<yellow>! "));
-            })
-            .build();
+    /**
+     * Shared parser: the standard tags, every {@link Palette} role as a tag, and the legacy severity tags
+     * {@code danger} ({@link Palette#ERROR}), {@code info}, {@code success} and {@code warning}, which are aliases of
+     * the same-named roles that also put their old glyph in front ({@code × • ✓ !}).
+     * Plain {@code <error>} has no glyph.
+     */
+    public static final MiniMessage MINI_MESSAGE = create();
+
+    private static MiniMessage create(TagResolver... extra) {
+        return MiniMessage.builder()
+                .editTags(builder -> {
+                    builder.resolver(Palette.resolver());
+                    builder.tag("danger", glyphTag(Palette.ERROR, "×"));
+                    builder.tag("info", glyphTag(Palette.INFO, "•"));
+                    builder.tag("success", glyphTag(Palette.SUCCESS, "✓"));
+                    builder.tag("warning", glyphTag(Palette.WARNING, "!"));
+                    for (TagResolver resolver : extra) builder.resolver(resolver);
+                })
+                .build();
+    }
+
+    /** Hex form, not the role tag: the legacy names {@code info} etc. are themselves tags and would recurse. */
+    private static Tag glyphTag(Palette role, String glyph) {
+        return Tag.preProcessParsed("<" + role.hex() + ">" + glyph + " ");
+    }
+
+    /**
+     * A parser like {@link #MINI_MESSAGE} that also knows {@code resolvers} (later resolvers win over earlier ones).
+     * Build it once and reuse it.
+     */
+    public static MiniMessage withResolvers(TagResolver... resolvers) {
+        return create(resolvers);
+    }
+
+    /** Every palette role as a MiniMessage tag, for adding to a parser of your own. */
+    public static TagResolver roleTags() {
+        return Palette.resolver();
+    }
+
+    /** Like {@link #toComponent(String)} with extra placeholders or tags for this call only. */
+    public static Component toComponentWith(@Language("MiniMessage") String string, TagResolver... resolvers) {
+        return MINI_MESSAGE.deserialize("<!i>" + string, resolvers);
+    }
 
     MiniMessageHelper() {
         throw new IllegalStateException("Utility class");
