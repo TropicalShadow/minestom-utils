@@ -8,13 +8,13 @@ version = System.getenv("TAG_VERSION") ?: "dev"
 
 repositories {
     mavenCentral()
-    maven("https://repo.hypera.dev/snapshots/") // luckperms (minestom) & Spark
+    maven("https://repo.minestom-united.dev/releases/") // CatchAll :)
+    maven("https://repo.tesseract.club/releases")
     maven("https://repo.smolder.fr/public/") // axiom-minestom
 
     maven("https://repo.lucko.me/") // spark-common
     maven("https://oss.sonatype.org/content/repositories/snapshots/") // spark-common's dependencies
-    maven("https://repo.tesseract.club/releases")
-    maven("https://repo.minestom-united.dev/releases/") // CatchAll :)
+    maven("https://repo.hypera.dev/snapshots/") // last resort: luckperms (minestom) & Spark now live on repo.tesseract.club; keep it last, a Gradle build fails if an earlier repo errors
 }
 
 dependencies {
