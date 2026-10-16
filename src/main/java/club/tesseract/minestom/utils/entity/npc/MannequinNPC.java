@@ -2,7 +2,7 @@ package club.tesseract.minestom.utils.entity.npc;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.entity.*;
 import net.minestom.server.entity.metadata.avatar.MannequinMeta;
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MannequinNPC extends NPC {
 
     private static final Tag<@NotNull Boolean> HAS_PREFIX = Tag.Boolean("has-prefix");
-    private static final Component NPC_TAG = Component.text("[NPC]", NamedTextColor.YELLOW);
+    private static final Component NPC_TAG = Component.text("[NPC]", Palette.INFO.color());
 
     public MannequinNPC() {
         super(EntityType.MANNEQUIN);

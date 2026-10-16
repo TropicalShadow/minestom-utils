@@ -4,7 +4,7 @@ import club.tesseract.minestom.utils.command.CommandCategory;
 import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.minecraft.ArgumentEntity;
@@ -44,7 +44,7 @@ public class KillCommand extends Command {
             sender.sendMessage(Component.textOfChildren(
                     Component.text("Killed"),
                     Component.space(),
-                    Component.text(foundEntities, NamedTextColor.GREEN),
+                    Component.text(foundEntities, Palette.SUCCESS.color()),
                     Component.space(),
                     Component.text(foundEntities == 1 ? "entity." : "entities.")
             ));

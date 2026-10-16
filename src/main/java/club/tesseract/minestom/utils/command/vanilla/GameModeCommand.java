@@ -4,7 +4,7 @@ import club.tesseract.minestom.utils.command.CommandCategory;
 import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.ArgumentType;
@@ -38,9 +38,9 @@ public class GameModeCommand extends Command {
             String gameModeName = gameMode.name().toLowerCase(Locale.ROOT);
 
             String formattedPermission = "minecraft.command.gamemode.%s".formatted(gameModeName);
-            Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
-            Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
-            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
+            Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(Palette.TEXT.color());
+            Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(Palette.MUTED.color());
+            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(Palette.MUTED.color());
 
             if (!ExtraConditions.hasPermission("minecraft.command.gamemode").canUse(player, null) &&
                     !ExtraConditions.hasPermission(formattedPermission).canUse(player, null)) {
@@ -75,9 +75,9 @@ public class GameModeCommand extends Command {
             setDefaultExecutor((sender, _) -> {
                 if (!(sender instanceof Player player)) return;
 
-                Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(NamedTextColor.WHITE);
-                Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
-                Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
+                Component gameModeComponent = Component.translatable("gameMode.%s".formatted(gameModeName)).color(Palette.TEXT.color());
+                Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(Palette.MUTED.color());
+                Component failedSelf = Component.translatable("debug.creative_spectator.error").color(Palette.MUTED.color());
 
                 if (player.setGameMode(gameMode)) {
                     player.sendMessage(successSelf);
@@ -127,14 +127,14 @@ public class GameModeCommand extends Command {
                     .onlyPlayers(true)
                     .setDefaultValue(defaultEntityFinder);
 
-            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(NamedTextColor.GRAY);
+            Component failedSelf = Component.translatable("debug.creative_spectator.error").color(Palette.MUTED.color());
 
             addSyntax((sender, context) -> {
                 EntityFinder playerFinder = context.get(playerArgument);
                 List<Entity> entities = playerFinder.find(sender);
 
-                Component gameModeComponent = Component.translatable("gameMode.%s".formatted(getName())).color(NamedTextColor.WHITE);
-                Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(NamedTextColor.GRAY);
+                Component gameModeComponent = Component.translatable("gameMode.%s".formatted(getName())).color(Palette.TEXT.color());
+                Component successSelf = Component.translatable("commands.gamemode.success.self", gameModeComponent).color(Palette.MUTED.color());
                 boolean collectiveSenderReply = entities.size() > 1;
                 AtomicInteger successfullyChanges = new AtomicInteger(0);
                 entities.forEach(entity -> {
@@ -147,7 +147,7 @@ public class GameModeCommand extends Command {
                             player.sendMessage(
                                     Component.translatable("gameMode.changed")
                                             .arguments(gameModeComponent)
-                                            .color(NamedTextColor.GRAY)
+                                            .color(Palette.MUTED.color())
                             );
 
                             if(!collectiveSenderReply) {

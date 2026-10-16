@@ -5,7 +5,7 @@ import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import club.tesseract.minestom.utils.command.sender.CommandBlockSender;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.minecraft.ArgumentEntity;
@@ -45,14 +45,14 @@ public class TeleportCommand extends Command {
         // Entity base teleportation: sender -> destination entity
         addSyntax((sender, context) -> {
             if (!(sender instanceof Entity entity)) {
-                sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));
+                sender.sendMessage(Component.text("This command can only be used by players.", Palette.ERROR.color()));
                 return;
             }
 
             EntityFinder destination = context.get(destinationArgument);
             List<Entity> found = destination.find(sender);
             if (found.isEmpty()) {
-                sender.sendMessage(Component.translatable("commands.teleport.invalidPosition").color(NamedTextColor.RED));
+                sender.sendMessage(Component.translatable("commands.teleport.invalidPosition").color(Palette.ERROR.color()));
                 return;
             }
 
@@ -73,7 +73,7 @@ public class TeleportCommand extends Command {
         // sender -> relative location + view
         addSyntax((sender, context) -> {
             if (!(sender instanceof Entity entity)) {
-                sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));
+                sender.sendMessage(Component.text("This command can only be used by players.", Palette.ERROR.color()));
                 return;
             }
             RelativeVec relativeVec = context.get(locationArgument);
@@ -96,11 +96,11 @@ public class TeleportCommand extends Command {
             Optional<Entity> destinationOpt = Optional.ofNullable(context.get(destinationArgument).findFirstEntity(sender));
 
             if (targets.isEmpty()) {
-                sender.sendMessage(Component.text("Invalid targets", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Invalid targets", Palette.ERROR.color()));
                 return;
             }
             if (destinationOpt.isEmpty()) {
-                sender.sendMessage(Component.translatable("commands.teleport.invalidPosition").color(NamedTextColor.RED));
+                sender.sendMessage(Component.translatable("commands.teleport.invalidPosition").color(Palette.ERROR.color()));
                 return;
             }
 

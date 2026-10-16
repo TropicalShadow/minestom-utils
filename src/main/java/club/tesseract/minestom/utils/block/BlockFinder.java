@@ -2,6 +2,7 @@ package club.tesseract.minestom.utils.block;
 
 import lombok.Getter;
 import net.kyori.adventure.key.Key;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.minestom.server.instance.block.Block;
@@ -37,6 +38,16 @@ public final class BlockFinder {
             return defaultBlock;
         }
         return fromColour(changedColour, defaultBlock);
+    }
+
+    /**
+     * Same as {@link #fromColour(TextColor, Block)} for a palette role, e.g. a team role: the block takes the
+     * dye colour nearest to the role's colour, so the block and the chat colour stay in step.
+     *
+     * @since 0.3.0
+     */
+    public static Block fromColour(@NotNull Palette role, Block defaultBlock){
+        return fromColour(role.color(), defaultBlock);
     }
 
     public static Block fromColour(@NotNull Colour colour, Block defaultBlock){

@@ -8,8 +8,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 
 import net.kyori.adventure.text.format.TextDecoration;
 import net.minestom.server.MinecraftServer;
@@ -78,47 +77,47 @@ public class TpsCommand extends Command {
 
             Component message = Component.textOfChildren(
                     // RAM
-                    Component.text("RAM: ", NamedTextColor.GRAY),
-                    Component.text(ramUsage + "MB / " + totalMem + "MB", NamedTextColor.GRAY),
-                    Component.text(" (", NamedTextColor.GRAY),
-                    Component.text(((int) floor((ramUsage * 100.0) / totalMem)) + "%", NamedTextColor.GREEN),
-                    Component.text(")", NamedTextColor.GRAY),
+                    Component.text("RAM: ", Palette.MUTED.color()),
+                    Component.text(ramUsage + "MB / " + totalMem + "MB", Palette.MUTED.color()),
+                    Component.text(" (", Palette.MUTED.color()),
+                    Component.text(((int) floor((ramUsage * 100.0) / totalMem)) + "%", Palette.SUCCESS.color()),
+                    Component.text(")", Palette.MUTED.color()),
 
                     // CPU
-                    Component.text("\nCPU: ", NamedTextColor.GRAY),
-                    Component.text((cpuPercent < 0 ? "..." : cpuPercent) + "%", NamedTextColor.GREEN),
+                    Component.text("\nCPU: ", Palette.MUTED.color()),
+                    Component.text((cpuPercent < 0 ? "..." : cpuPercent) + "%", Palette.SUCCESS.color()),
 
                     // TPS
-                    Component.text("\nTPS: ", NamedTextColor.GRAY),
-                    Component.text(String.valueOf(tps), NamedTextColor.GREEN),
-                    Component.text(" (", NamedTextColor.GRAY),
+                    Component.text("\nTPS: ", Palette.MUTED.color()),
+                    Component.text(String.valueOf(tps), Palette.SUCCESS.color()),
+                    Component.text(" (", Palette.MUTED.color()),
                     Component.text((floor(tickMs * 1000.0) / 1000) + "ms",
-                            TextColor.lerp((float) (tickMs / maxTickMs), NamedTextColor.GREEN, NamedTextColor.RED)),
-                    Component.text(")\n", NamedTextColor.GRAY),
+                            Palette.gauge(tickMs / maxTickMs)),
+                    Component.text(")\n", Palette.MUTED.color()),
 
                     createGcComponent(),
 
                     // Entities
-                    Component.text("\nEntities: ", NamedTextColor.GRAY)
-                            .append(Component.text(entities + onlinePlayers, NamedTextColor.GOLD))
+                    Component.text("\nEntities: ", Palette.MUTED.color())
+                            .append(Component.text(entities + onlinePlayers, Palette.ACCENT.color()))
                             .hoverEvent(HoverEvent.showText(
                                     Component.text()
-                                            .append(Component.text("Players: ", NamedTextColor.GRAY))
-                                            .append(Component.text(String.valueOf(onlinePlayers), NamedTextColor.GOLD))
-                                            .append(Component.text("\nEntities: ", NamedTextColor.GRAY))
-                                            .append(Component.text(String.valueOf(entities), NamedTextColor.GOLD))
+                                            .append(Component.text("Players: ", Palette.MUTED.color()))
+                                            .append(Component.text(String.valueOf(onlinePlayers), Palette.ACCENT.color()))
+                                            .append(Component.text("\nEntities: ", Palette.MUTED.color()))
+                                            .append(Component.text(String.valueOf(entities), Palette.ACCENT.color()))
                                             .build()
                             )),
 
                     // Instances
-                    Component.text("\nInstances: ", NamedTextColor.GRAY)
-                            .append(Component.text(String.valueOf(instances.size()), NamedTextColor.GOLD))
+                    Component.text("\nInstances: ", Palette.MUTED.color())
+                            .append(Component.text(String.valueOf(instances.size()), Palette.ACCENT.color()))
                             .hoverEvent(HoverEvent.showText(
                                     Component.text()
-                                            .append(Component.text("Shared: ", NamedTextColor.GRAY))
-                                            .append(Component.text(String.valueOf(sharedInstances), NamedTextColor.GOLD))
-                                            .append(Component.text("\nChunks: ", NamedTextColor.GRAY))
-                                            .append(Component.text(String.valueOf(chunks), NamedTextColor.GOLD))
+                                            .append(Component.text("Shared: ", Palette.MUTED.color()))
+                                            .append(Component.text(String.valueOf(sharedInstances), Palette.ACCENT.color()))
+                                            .append(Component.text("\nChunks: ", Palette.MUTED.color()))
+                                            .append(Component.text(String.valueOf(chunks), Palette.ACCENT.color()))
                                             .build()
                             ))
             );
@@ -131,7 +130,7 @@ public class TpsCommand extends Command {
 
     private Component createGcComponent() {
         TextComponent.Builder builder = Component.text()
-                .append(Component.text("GC Info:", NamedTextColor.GRAY));
+                .append(Component.text("GC Info:", Palette.MUTED.color()));
 
         for (var entry : getGcInfo().entrySet()) {
             GcInfo info = entry.getValue();
@@ -139,9 +138,9 @@ public class TpsCommand extends Command {
             String lastRunText = parsed(millisSinceRun / 1000);
 
             Component entryComponent = Component.text()
-                    .append(Component.text("\n  " + entry.getKey() + ":", NamedTextColor.GRAY))
-                    .append(Component.text("\n    Last Run: ", NamedTextColor.GRAY))
-                    .append(Component.text(lastRunText, NamedTextColor.GOLD))
+                    .append(Component.text("\n  " + entry.getKey() + ":", Palette.MUTED.color()))
+                    .append(Component.text("\n    Last Run: ", Palette.MUTED.color()))
+                    .append(Component.text(lastRunText, Palette.ACCENT.color()))
                     .hoverEvent(HoverEvent.showText(createGcHover(entry.getKey(), info)))
                     .build();
 
@@ -152,17 +151,17 @@ public class TpsCommand extends Command {
 
     private Component createGcHover(String name, GcInfo info) {
         return Component.text()
-                .append(Component.text("Name: ", NamedTextColor.GOLD))
-                .append(Component.text(name, NamedTextColor.GRAY))
+                .append(Component.text("Name: ", Palette.ACCENT.color()))
+                .append(Component.text(name, Palette.MUTED.color()))
                 .append(Component.newline())
-                .append(Component.text("Duration: ", NamedTextColor.GOLD))
-                .append(Component.text(info.getDuration() + "ms", NamedTextColor.GRAY))
+                .append(Component.text("Duration: ", Palette.ACCENT.color()))
+                .append(Component.text(info.getDuration() + "ms", Palette.MUTED.color()))
                 .append(Component.newline()).append(Component.newline())
-                .append(Component.text("Memory After:", NamedTextColor.GOLD))
+                .append(Component.text("Memory After:", Palette.ACCENT.color()))
                 .append(Component.newline())
                 .append(createMemoryUsagePeriod(info.getMemoryUsageAfterGc()))
                 .append(Component.newline()).append(Component.newline())
-                .append(Component.text("Memory Before:", NamedTextColor.GOLD))
+                .append(Component.text("Memory Before:", Palette.ACCENT.color()))
                 .append(Component.newline())
                 .append(createMemoryUsagePeriod(info.getMemoryUsageBeforeGc()))
                 .build();
@@ -180,8 +179,8 @@ public class TpsCommand extends Command {
 
             lines.add(
                     Component.text()
-                            .append(Component.text("  " + key + ": ", NamedTextColor.GOLD))
-                            .append(Component.text((usage.getUsed() / 1024 / 1024) + " MB", NamedTextColor.GRAY))
+                            .append(Component.text("  " + key + ": ", Palette.ACCENT.color()))
+                            .append(Component.text((usage.getUsed() / 1024 / 1024) + " MB", Palette.MUTED.color()))
                             .build()
             );
         }
@@ -226,9 +225,9 @@ public class TpsCommand extends Command {
 
     Component armify(Component component, int length){
         return Component.text()
-                .append(Component.text(" ".repeat(length) + "\n", NamedTextColor.DARK_GRAY, TextDecoration.STRIKETHROUGH))
+                .append(Component.text(" ".repeat(length) + "\n", Palette.SUBTLE.color(), TextDecoration.STRIKETHROUGH))
                 .append(component)
-                .append(Component.text("\n" + " ".repeat(length), NamedTextColor.DARK_GRAY, TextDecoration.STRIKETHROUGH))
+                .append(Component.text("\n" + " ".repeat(length), Palette.SUBTLE.color(), TextDecoration.STRIKETHROUGH))
                 .build();
     }
 

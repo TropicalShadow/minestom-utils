@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
@@ -114,9 +114,9 @@ public abstract class NPC extends EntityCreature {
 
     public void speak(Audience audience, Component text) {
         Component message = Component.textOfChildren(
-                getName().colorIfAbsent(NamedTextColor.YELLOW),
+                getName().colorIfAbsent(Palette.INFO.color()),
                 Component.space(),
-                text.colorIfAbsent(NamedTextColor.GRAY)
+                text.colorIfAbsent(Palette.MUTED.color())
         );
 
         audience.sendMessage(message);

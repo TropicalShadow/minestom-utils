@@ -2,7 +2,7 @@ package club.tesseract.minestom.utils.command;
 
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.arguments.minecraft.ArgumentEntity;
@@ -32,7 +32,7 @@ public class HealCommand extends Command {
                 return;
             }
             player.heal();
-            player.sendMessage(Component.text("You have been healed!", NamedTextColor.GREEN));
+            player.sendMessage(Component.text("You have been healed!", Palette.SUCCESS.color()));
         });
 
         addSyntax((sender, context) -> {
@@ -41,7 +41,7 @@ public class HealCommand extends Command {
             List<LivingEntity> livingEntity = entities.stream().filter(entity -> entity instanceof LivingEntity).map(entity -> (LivingEntity) entity).toList();
 
             livingEntity.forEach(LivingEntity::heal);
-            sender.sendMessage(Component.text("Healed %s entities(s)".formatted(livingEntity.size()), NamedTextColor.GREEN));
+            sender.sendMessage(Component.text("Healed %s entities(s)".formatted(livingEntity.size()), Palette.SUCCESS.color()));
         }, ENTITY_ARGUMENT);
 
     }

@@ -6,7 +6,7 @@ import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.adventure.audience.PacketGroupingAudience;
 import net.minestom.server.command.builder.Command;
@@ -18,7 +18,7 @@ import net.minestom.server.entity.Player;
 )
 public class StopCommand extends Command {
 
-    private static final Component STOP_MESSAGE = Component.text("Stopping the server...", NamedTextColor.YELLOW);
+    private static final Component STOP_MESSAGE = Component.text("Stopping the server...", Palette.WARNING.color());
 
     public StopCommand() {
         super("stop");

@@ -5,7 +5,6 @@ package club.tesseract.minestom.utils.misc;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.jetbrains.annotations.NotNull;
@@ -13,22 +12,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 
 /**
- * Enum representing the rarity of an item
+ * Enum representing the rarity of an item. Colours are {@link Palette} roles (rarity tiers use the role that fits the
+ * tier, so two tiers can share a colour: {@link #SPECIAL} and {@link #VERY_SPECIAL}).
  * @author TropicalShadow
  * @since 0.0.1
  */
 @Getter
 @AllArgsConstructor
 public enum Rarity {
-    COMMON(NamedTextColor.WHITE),
-    UNCOMMON(NamedTextColor.GREEN),
-    RARE(NamedTextColor.BLUE),
-    EPIC(NamedTextColor.DARK_PURPLE),
-    LEGENDARY(NamedTextColor.GOLD),
-    MYTHIC(NamedTextColor.LIGHT_PURPLE),
-    SPECIAL(NamedTextColor.RED),
-    VERY_SPECIAL(NamedTextColor.RED),
-    ADMIN(NamedTextColor.DARK_RED),
+    COMMON(Palette.TEXT.color()),
+    UNCOMMON(Palette.SUCCESS.color()),
+    RARE(Palette.INFO.color()),
+    EPIC(Palette.DM.color()),
+    LEGENDARY(Palette.ACCENT.color()),
+    MYTHIC(Palette.GEM.color()),
+    SPECIAL(Palette.ERROR.color()),
+    VERY_SPECIAL(Palette.ERROR.color()),
+    ADMIN(Palette.STAFF.color()),
     ;
 
     private final @NotNull TextColor color;

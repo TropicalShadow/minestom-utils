@@ -2,7 +2,7 @@ package club.tesseract.minestom.utils.misc.lang;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.minestom.server.utils.StringUtils;
@@ -12,7 +12,7 @@ import java.util.*;
 // CREDIT TO MR [MINIKLOON](https://gist.github.com/Minikloon/e6a7679d171b90dc4e0731db46d77c84)
 public class ComponentHelper {
 
-    private static final TextComponent UNSUPPORTED = Component.text("ERROR WRAPPING").color(NamedTextColor.DARK_RED);
+    private static final TextComponent UNSUPPORTED = Component.text("ERROR WRAPPING").color(Palette.ERROR.color());
 
     public static List<Component> wrapLoreLines(final Component component, final int length) {
 
@@ -203,6 +203,6 @@ public class ComponentHelper {
     }
 
     private static TextComponent unsupported() {
-        return Component.text("!CANNOT WRAP!").color(NamedTextColor.DARK_RED);
+        return Component.text("!CANNOT WRAP!").color(Palette.ERROR.color());
     }
 }

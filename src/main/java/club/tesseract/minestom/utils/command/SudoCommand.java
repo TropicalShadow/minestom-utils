@@ -3,7 +3,7 @@ package club.tesseract.minestom.utils.command;
 import club.tesseract.minestom.utils.command.args.GenericArguments;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.CommandResult;
@@ -34,7 +34,7 @@ public final class SudoCommand extends Command {
             if(player.isEmpty()) return;
 
             MinecraftServer.getCommandManager().execute(player.get(), cmd.getInput());
-            sender.sendMessage(Component.text("Executed command as %s".formatted(player.get().getUsername()), NamedTextColor.GREEN));
+            sender.sendMessage(Component.text("Executed command as %s".formatted(player.get().getUsername()), Palette.SUCCESS.color()));
         }, GenericArguments.playerArgs, SUDO_COMMAND);
     }
 }

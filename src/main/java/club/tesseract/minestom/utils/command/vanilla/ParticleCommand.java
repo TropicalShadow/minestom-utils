@@ -6,7 +6,7 @@ import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import club.tesseract.minestom.utils.command.sender.CommandBlockSender;
 import lombok.extern.slf4j.Slf4j;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.CommandContext;
@@ -164,10 +164,10 @@ public class ParticleCommand extends Command {
         }
 
         if (result > 0) {
-            sender.sendMessage(Component.translatable("commands.particle.success", NamedTextColor.GRAY).arguments(Component.text(particle.key().asString())));
+            sender.sendMessage(Component.translatable("commands.particle.success", Palette.MUTED.color()).arguments(Component.text(particle.key().asString())));
             return;
         }
-        sender.sendMessage(Component.translatable("commands.particle.failed", NamedTextColor.RED));
+        sender.sendMessage(Component.translatable("commands.particle.failed", Palette.ERROR.color()));
     }
 
     private Collection<Player> getAllPlayers(CommandSender sender) {

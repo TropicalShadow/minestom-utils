@@ -5,7 +5,7 @@ import club.tesseract.minestom.utils.command.CommandMetadata;
 import club.tesseract.minestom.utils.command.args.PlayerArgument;
 import club.tesseract.minestom.utils.command.condition.ExtraConditions;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import club.tesseract.minestom.utils.misc.Palette;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.builder.Command;
 import net.minestom.server.command.builder.arguments.ArgumentType;
@@ -35,10 +35,10 @@ import java.util.function.Predicate;
 )
 public final class ClearItemCommand extends Command {
 
-    private static final Function<String, Component> ERROR_SINGLE = (name) -> Component.translatable("clear.failed.single", NamedTextColor.RED).arguments(Component.text(name));
-    private static final Function<Integer, Component> ERROR_MULTIPLE = (count) -> Component.translatable("clear.failed.multiple", NamedTextColor.RED).arguments(Component.text(count));
+    private static final Function<String, Component> ERROR_SINGLE = (name) -> Component.translatable("clear.failed.single", Palette.ERROR.color()).arguments(Component.text(name));
+    private static final Function<Integer, Component> ERROR_MULTIPLE = (count) -> Component.translatable("clear.failed.multiple", Palette.ERROR.color()).arguments(Component.text(count));
 
-    private static final Component PLAYER_ONLY_ERROR = Component.translatable("permissions.requires.player", NamedTextColor.RED);
+    private static final Component PLAYER_ONLY_ERROR = Component.translatable("permissions.requires.player", Palette.ERROR.color());
     private static final PlayerArgument PLAYER_ARGUMENT = new PlayerArgument("players", false);
     private static final ArgumentItemStack ITEM_ARGUMENT = ArgumentType.ItemStack("item");
     private static final ArgumentInteger MAX_COUNT_ARGUMENT = ArgumentType.Integer("maxCount");
@@ -100,20 +100,20 @@ public final class ClearItemCommand extends Command {
         if (maxCount == 0) {
             if (players.size() == 1) {
                 sender.sendMessage(
-                        Component.translatable("commands.clear.test.single", NamedTextColor.GRAY).arguments(Component.text(finalCount), players.getFirst().getName())
+                        Component.translatable("commands.clear.test.single", Palette.MUTED.color()).arguments(Component.text(finalCount), players.getFirst().getName())
                 );
                 return;
             }
             sender.sendMessage(
-                    Component.translatable("commands.clear.test.multiple", NamedTextColor.GRAY).arguments(Component.text(finalCount), Component.text(players.size()))
+                    Component.translatable("commands.clear.test.multiple", Palette.MUTED.color()).arguments(Component.text(finalCount), Component.text(players.size()))
             );
         } else if (players.size() == 1) {
             sender.sendMessage(
-                    Component.translatable("commands.clear.success.single", NamedTextColor.GRAY).arguments(Component.text(finalCount), players.getFirst().getName())
+                    Component.translatable("commands.clear.success.single", Palette.MUTED.color()).arguments(Component.text(finalCount), players.getFirst().getName())
             );
         } else {
             sender.sendMessage(
-                    Component.translatable("commands.clear.success.multiple", NamedTextColor.GRAY).arguments(Component.text(finalCount), Component.text(players.size()))
+                    Component.translatable("commands.clear.success.multiple", Palette.MUTED.color()).arguments(Component.text(finalCount), Component.text(players.size()))
             );
         }
     }
