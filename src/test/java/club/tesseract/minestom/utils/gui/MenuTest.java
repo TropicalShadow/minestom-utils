@@ -66,6 +66,14 @@ class MenuTest {
             set(slot, item, handler);
         }
 
+        void border(ItemStack item) {
+            fillBorder(item);
+        }
+
+        void empty(ItemStack item) {
+            fillEmpty(item);
+        }
+
         void allowPlayerInv(boolean allow) {
             allowPlayerInventory(allow);
         }
@@ -813,5 +821,21 @@ class MenuTest {
         assertEquals(1, grandchild.closes);
         assertFalse(player.eventNode().hasListener(InventoryOpenEvent.class));
         assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
+    }
+
+    @Test
+    void fillBorderAndFillEmptyLeaveExistingItems(Env env) {
+        TestMenu menu = new TestMenu(player(env));
+        menu.renderer = m -> {
+            m.put(13, DIAMOND, ClickHandlers.none());
+            m.border(STONE);
+            m.empty(ItemStack.of(Material.DIRT));
+        };
+        menu.show();
+        assertEquals(STONE, menu.getInventory().getItemStack(0));
+        assertEquals(DIAMOND, menu.getInventory().getItemStack(13));
+        assertEquals(ItemStack.of(Material.DIRT), menu.getInventory().getItemStack(12));
+        menu.refresh();
+        assertEquals(STONE, menu.getInventory().getItemStack(26));
     }
 }

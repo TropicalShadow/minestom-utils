@@ -268,6 +268,18 @@ public abstract class Menu {
         this.set(slot, itemStack, ClickHandlers.none());
     }
 
+    /** Puts {@code item} on every border slot of the inventory (see {@link Layout#borderSlots()}), with no handler. */
+    protected final void fillBorder(@NotNull ItemStack item) {
+        for (int slot : Layout.of(this.inventory.getInventoryType()).borderSlots()) set(slot, item);
+    }
+
+    /** Puts {@code item} on every slot that is currently empty (air), with no handler. */
+    protected final void fillEmpty(@NotNull ItemStack item) {
+        for (int slot = 0; slot < this.inventory.getSize(); slot++) {
+            if (this.inventory.getItemStack(slot).isAir()) set(slot, item);
+        }
+    }
+
     protected final void add(ItemStack itemStack) {
         this.inventory.addItemStack(itemStack);
     }
