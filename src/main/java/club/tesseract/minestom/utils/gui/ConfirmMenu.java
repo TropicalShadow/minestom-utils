@@ -18,7 +18,8 @@ import org.slf4j.LoggerFactory;
  * once), because Minestom is still closing the inventory when the menu hears about it; the close that follows a click
  * does not run it. A click decides and runs its callback synchronously.
  * A callback that throws is logged at warn level; the menu is still left and the other callback does not run.
- * Rendering the menu again (show, refresh, back) starts a new decision. Either callback may open another inventory:
+ * Rendering the menu again (show, refresh, back) starts a new decision, except while a click's decision is still
+ * running: a {@code refresh()} from inside a callback keeps the decision made. Either callback may open another inventory:
  * after a click the menu is then not closed over it, and after Esc the deferred {@code onCancel} opens it once the
  * close has finished, so it stays open.
  * When another inventory replaced the menu, that inventory is already open when {@code onCancel} runs; check
@@ -37,6 +38,8 @@ public class ConfirmMenu extends Menu {
     private final Runnable onConfirm;
     private final Runnable onCancel;
     private boolean decided = false;
+    /** A click's decision is running (callback, then leaving): a redraw from inside it must not start a new one. */
+    private boolean deciding = false;
 
     public ConfirmMenu(@NotNull Player player, @NotNull Component title, @NotNull ItemStack subject,
                        @NotNull ButtonStyle style, @NotNull Runnable onConfirm, @NotNull Runnable onCancel) {
@@ -49,7 +52,8 @@ public class ConfirmMenu extends Menu {
 
     @Override
     protected void render() {
-        this.decided = false; // every show, refresh or back() into this menu starts a new decision
+        // Every show, refresh or back() into this menu starts a new decision, except a redraw from inside a decision.
+        if (!this.deciding) this.decided = false;
         fillBorder(this.style.filler()); // first: it wipes anything already on the border slots
         set(CONFIRM_SLOT, this.style.confirm(), click -> decide(this.onConfirm));
         set(SUBJECT_SLOT, this.subject);
@@ -67,11 +71,16 @@ public class ConfirmMenu extends Menu {
     private void decide(Runnable callback) {
         if (this.decided) return;
         this.decided = true;
+        this.deciding = true;
         try {
             run(callback);
         } finally {
-            if (hasParent()) back();
-            else if (isCurrent()) this.player.closeInventory(); // the callback may have opened something else
+            try {
+                if (hasParent()) back();
+                else if (isCurrent()) this.player.closeInventory(); // the callback may have opened something else
+            } finally {
+                this.deciding = false;
+            }
         }
     }
 

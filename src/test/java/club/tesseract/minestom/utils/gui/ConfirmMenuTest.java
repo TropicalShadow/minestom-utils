@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -269,6 +270,36 @@ class ConfirmMenuTest {
         env.tick();
         assertEquals(1, counts.confirm.get());
         assertEquals(0, counts.cancel.get());
+    }
+
+    @Test
+    void refreshFromInsideACallbackDoesNotRearmTheDecision(Env env) {
+        for (boolean withParent : new boolean[]{false, true}) {
+            Player player = player(env);
+            ParentMenu parent = new ParentMenu(player);
+            AtomicInteger confirm = new AtomicInteger();
+            AtomicInteger cancel = new AtomicInteger();
+            AtomicReference<ConfirmMenu> self = new AtomicReference<>();
+            ConfirmMenu menu = new ConfirmMenu(player, Component.text("x"), SUBJECT, STYLE,
+                    () -> { confirm.incrementAndGet(); self.get().refresh(); }, cancel::incrementAndGet);
+            self.set(menu);
+            if (withParent) {
+                parent.show();
+                parent.openChild(menu);
+                tickPastGuard(env);
+            } else {
+                menu.show();
+            }
+
+            click(player, menu.getInventory(), ConfirmMenu.CONFIRM_SLOT, 0);
+            env.tick();
+            env.tick();
+
+            assertEquals(1, confirm.get(), "parent " + withParent);
+            assertEquals(0, cancel.get(), "parent " + withParent);
+            if (withParent) assertSame(parent.getInventory(), player.getOpenInventory());
+            else assertNull(player.getOpenInventory());
+        }
     }
 
     @Test
