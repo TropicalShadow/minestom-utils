@@ -14,9 +14,13 @@ import net.minestom.server.inventory.click.Click;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 /**
@@ -53,6 +57,7 @@ public abstract class Menu {
     public static final Tag<@NotNull Menu> MENU_TAG = Tag.Transient("menu");
     /** The player's navigation stack: menus {@link #back()} can return to. */
     public static final Tag<@NotNull NavStack> NAV_TAG = Tag.Transient("menu-nav");
+    private static final Logger LOGGER = LoggerFactory.getLogger(Menu.class);
 
     protected final Player player;
     protected final Inventory inventory;
@@ -228,6 +233,36 @@ public abstract class Menu {
                 target.suspended = true;
             }
         }
+    }
+
+    /**
+     * Runs {@code render} with the future's result on the player's next tick, but only if this menu is still the
+     * player's open, unclosed menu then; otherwise the result is dropped silently. A failed future is logged at debug
+     * level and dropped (use {@link #loadAsync(CompletableFuture, Consumer, Consumer)} to handle errors).
+     */
+    public final <R> void loadAsync(@NotNull CompletableFuture<R> future, @NotNull Consumer<R> render) {
+        loadAsync(future, render, error -> LOGGER.debug("Async load for menu {} failed", getClass().getName(), error));
+    }
+
+    /**
+     * Like {@link #loadAsync(CompletableFuture, Consumer)}, but a failed future runs {@code onError} (with the cause
+     * unwrapped from {@link CompletionException}) under the same rule: only while this menu is current and not closed.
+     */
+    public final <R> void loadAsync(@NotNull CompletableFuture<R> future, @NotNull Consumer<R> render,
+                                    @NotNull Consumer<Throwable> onError) {
+        future.whenComplete((value, error) -> this.player.scheduler().scheduleNextTick(() -> {
+            if (!isCurrent() || isClosed()) return;
+            if (error != null) {
+                onError.accept(unwrap(error));
+            } else {
+                render.accept(value);
+            }
+        }));
+    }
+
+    static Throwable unwrap(Throwable error) {
+        while (error instanceof CompletionException && error.getCause() != null) error = error.getCause();
+        return error;
     }
 
     /** True when this menu was opened with {@link #openChild(Menu)} and {@link #back()} returns to a parent. */
