@@ -24,7 +24,8 @@ public interface PageSource<T> {
     /**
      * One loaded page.
      *
-     * @param items      the page's elements, at most the menu's page size are shown
+     * @param items      the page's elements; return at most the menu's page size (its content slot count): extra
+     *                   items are dropped with a warning
      * @param nextCursor cursor of the following page, or null when this is the last page
      */
     record Page<T>(@NotNull List<T> items, @Nullable Long nextCursor) {

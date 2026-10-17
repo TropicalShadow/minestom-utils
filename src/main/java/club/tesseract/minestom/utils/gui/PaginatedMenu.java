@@ -8,6 +8,8 @@ import net.minestom.server.inventory.click.Click;
 import net.minestom.server.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
  * @param <T> element type
  */
 public abstract class PaginatedMenu<T> extends Menu {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PaginatedMenu.class);
 
     protected final ButtonStyle style;
     private final Layout layout;
@@ -83,12 +86,19 @@ public abstract class PaginatedMenu<T> extends Menu {
     /**
      * Draws the menu's own extra buttons after the content and the navigation buttons, on every redraw. Use slots
      * outside {@link #contentSlots()} and the back/prev/next slots. Does nothing by default.
+     * Drawing on the back/prev/next slots overwrites the navigation buttons.
      */
     protected void renderFooter() {
     }
 
-    /** Runs when an async page load fails while this menu is current. The menu keeps the page it showed. */
+    /**
+     * Runs when an async page load fails (including a source that throws or returns a null future) while this menu is
+     * current and not closed. The cursor history is unchanged and the menu keeps the page it showed ({@link
+     * ButtonStyle#empty()} if the first load failed); it is redrawn afterwards even if this method throws. The default
+     * logs at warn level: override it to tell the player.
+     */
     protected void onLoadError(@NotNull Throwable error) {
+        LOGGER.warn("Page load for menu {} failed", getClass().getName(), error);
     }
 
     /** Slots that show elements, in order. Default {@link Layout#contentSlots()}; the page size is its length. */
@@ -220,21 +230,47 @@ public abstract class PaginatedMenu<T> extends Menu {
         CompletableFuture<Page<T>> future;
         try {
             future = loadingFrom.load(target);
+            if (future == null) {
+                future = CompletableFuture.failedFuture(new NullPointerException(
+                        "PageSource " + loadingFrom.getClass().getName() + " returned a null future for cursor " + target));
+            }
         } catch (RuntimeException e) {
             future = CompletableFuture.failedFuture(e);
         }
         if (isCurrent()) refresh();
-        future.whenComplete((result, error) -> this.player.scheduler().scheduleNextTick(() -> {
-            if (loadGeneration != this.generation) return; // superseded by a newer load or source
-            this.loading = false;
-            boolean visible = isCurrent() && !isClosed();
-            if (error != null || result == null) {
-                if (visible) onLoadError(error != null ? unwrap(error) : new NullPointerException("null page"));
+        future.whenComplete((result, error) -> this.player.scheduler().scheduleNextTick(
+                () -> complete(loadGeneration, target, move, result, error)));
+    }
+
+    /**
+     * Finishes a load on the player's tick. Never throws: a failure in {@link #onLoadError}, in applying the page or
+     * in redrawing is logged, {@code loading} is always cleared and the menu is always redrawn while visible.
+     */
+    private void complete(long loadGeneration, @Nullable Long target, Move move, @Nullable Page<T> result,
+                          @Nullable Throwable error) {
+        if (loadGeneration != this.generation) return; // superseded by a newer load or source
+        this.loading = false;
+        boolean visible = isCurrent() && !isClosed();
+        try {
+            if (error == null && result == null) {
+                error = new NullPointerException("PageSource future completed with a null page for cursor " + target);
+            }
+            if (error != null) {
+                if (visible) onLoadError(unwrap(error));
             } else {
                 apply(target, move, result);
             }
-            if (visible) refresh();
-        }));
+        } catch (RuntimeException e) {
+            LOGGER.warn("Finishing a page load for menu {} failed", getClass().getName(), e);
+        } finally {
+            if (visible) {
+                try {
+                    refresh();
+                } catch (RuntimeException e) {
+                    LOGGER.warn("Redrawing menu {} after a page load failed", getClass().getName(), e);
+                }
+            }
+        }
     }
 
     private void apply(@Nullable Long target, Move move, Page<T> result) {
@@ -253,7 +289,13 @@ public abstract class PaginatedMenu<T> extends Menu {
         this.cursor = target;
         this.nextCursor = result.nextCursor();
         List<T> loaded = result.items();
-        this.items = loaded.size() > slots().length ? loaded.subList(0, slots().length) : loaded;
+        int pageSize = slots().length;
+        if (loaded.size() > pageSize) {
+            LOGGER.warn("PageSource for menu {} returned {} items for a page of {}; dropped the extra items",
+                    getClass().getName(), loaded.size(), pageSize);
+            loaded = loaded.subList(0, pageSize);
+        }
+        this.items = loaded;
     }
 
     private List<T> pageItems() {

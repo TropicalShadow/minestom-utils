@@ -237,25 +237,35 @@ public abstract class Menu {
 
     /**
      * Runs {@code render} with the future's result on the player's next tick, but only if this menu is still the
-     * player's open, unclosed menu then; otherwise the result is dropped silently. A failed future is logged at debug
-     * level and dropped (use {@link #loadAsync(CompletableFuture, Consumer, Consumer)} to handle errors).
+     * player's open, unclosed menu then; otherwise the result is dropped silently. A failed future is logged at warn
+     * level (under the same rule) and dropped; use {@link #loadAsync(CompletableFuture, Consumer, Consumer)} to handle
+     * errors.
+     * <p>
+     * Results for a menu that is covered or closed are dropped; if the render must always take effect, store the
+     * result in your own state and redraw in {@link #render()}.
      */
     public final <R> void loadAsync(@NotNull CompletableFuture<R> future, @NotNull Consumer<R> render) {
-        loadAsync(future, render, error -> LOGGER.debug("Async load for menu {} failed", getClass().getName(), error));
+        loadAsync(future, render, error -> LOGGER.warn("Async load for menu {} failed", getClass().getName(), error));
     }
 
     /**
      * Like {@link #loadAsync(CompletableFuture, Consumer)}, but a failed future runs {@code onError} (with the cause
      * unwrapped from {@link CompletionException}) under the same rule: only while this menu is current and not closed.
+     * Results for a menu that is covered or closed are dropped; if the render must always take effect, store the
+     * result in your own state and redraw in {@link #render()}.
      */
     public final <R> void loadAsync(@NotNull CompletableFuture<R> future, @NotNull Consumer<R> render,
                                     @NotNull Consumer<Throwable> onError) {
         future.whenComplete((value, error) -> this.player.scheduler().scheduleNextTick(() -> {
             if (!isCurrent() || isClosed()) return;
-            if (error != null) {
-                onError.accept(unwrap(error));
-            } else {
-                render.accept(value);
+            try {
+                if (error != null) {
+                    onError.accept(unwrap(error));
+                } else {
+                    render.accept(value);
+                }
+            } catch (RuntimeException e) {
+                LOGGER.warn("Async load callback for menu {} failed", getClass().getName(), e);
             }
         }));
     }

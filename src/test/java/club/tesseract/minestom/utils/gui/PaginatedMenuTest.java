@@ -58,7 +58,19 @@ class PaginatedMenuTest {
     /** Each element renders as paper whose amount is element + 1 (elements are 0..63). */
     static final class ListMenu extends PaginatedMenu<Integer> {
         final List<Integer> clicked = new ArrayList<>();
+        final List<Throwable> errors = new ArrayList<>();
+        boolean throwOnError = false;
         int renders = 0;
+
+        @Override
+        protected void onLoadError(Throwable error) {
+            errors.add(error);
+            if (throwOnError) throw new IllegalStateException("onLoadError failed");
+        }
+
+        boolean loading() {
+            return isLoading();
+        }
 
         ListMenu(Player player) {
             super(player, InventoryType.CHEST_3_ROW, Component.text("list"), STYLE);
@@ -366,6 +378,133 @@ class PaginatedMenuTest {
         click(player, child.getInventory(), LAYOUT.back());
         assertContent(root, range(0, 4));
         assertEquals(1, source.requested.size());
+    }
+
+    private static boolean shows(Menu menu, String name) {
+        return IntStream.range(0, PAGE_SIZE).anyMatch(i -> name.equals(name(slot(menu, i))));
+    }
+
+    @Test
+    void failedFirstLoadShowsEmptyAndReportsError(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        ManualSource source = new ManualSource();
+        menu.source(source);
+        menu.show();
+
+        source.last().completeExceptionally(new IllegalStateException("db down"));
+        env.tick();
+
+        assertFalse(menu.loading());
+        assertFalse(shows(menu, "loading"));
+        assertTrue(shows(menu, "empty"));
+        assertEquals(1, menu.errors.size());
+        assertInstanceOf(IllegalStateException.class, menu.errors.getFirst());
+        assertEquals(ItemStack.of(Material.HOPPER), slot(menu, FOOTER_EXTRA_SLOT));
+    }
+
+    @Test
+    void failedNextKeepsHistoryAndPreviousPage(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        ManualSource source = new ManualSource();
+        menu.source(source);
+        menu.show();
+        source.last().complete(new Page<>(range(0, 18), 100L));
+        env.tick();
+
+        click(player, menu.getInventory(), LAYOUT.next());
+        source.last().completeExceptionally(new IllegalStateException("timeout"));
+        env.tick();
+
+        assertFalse(menu.loading());
+        assertEquals(1, menu.errors.size());
+        assertContent(menu, range(0, 18));
+        assertTrue(slot(menu, LAYOUT.prev()).isAir());
+        assertEquals("next 1/2", name(slot(menu, LAYOUT.next())));
+
+        // Next works again and the history was not corrupted by the failure.
+        click(player, menu.getInventory(), LAYOUT.next());
+        assertEquals(100L, source.requested.getLast());
+        source.last().complete(new Page<>(range(18, 20), null));
+        env.tick();
+        assertContent(menu, range(18, 20));
+        assertEquals("prev 2/2", name(slot(menu, LAYOUT.prev())));
+        click(player, menu.getInventory(), LAYOUT.prev());
+        assertNull(source.requested.getLast());
+    }
+
+    @Test
+    void onLoadErrorOnlyWhileVisible(Env env) {
+        Player player = player(env);
+        ListMenu root = new ListMenu(player);
+        ManualSource source = new ManualSource();
+        root.source(source);
+        root.show();
+        ListMenu child = new ListMenu(player);
+        child.items(List.of());
+        root.openChild(child);
+
+        source.last().completeExceptionally(new IllegalStateException("covered"));
+        env.tick();
+        assertTrue(root.errors.isEmpty());
+        assertFalse(root.loading());
+
+        click(player, child.getInventory(), LAYOUT.back());
+        assertTrue(shows(root, "empty"));
+
+        root.reload();
+        player.closeInventory();
+        source.last().completeExceptionally(new IllegalStateException("closed"));
+        env.tick();
+        assertTrue(root.errors.isEmpty());
+        assertFalse(root.loading());
+    }
+
+    @Test
+    void synchronousThrowFromLoadIsAFailedLoad(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        menu.source(cursor -> { throw new IllegalStateException("sync"); });
+        menu.show();
+        env.tick();
+
+        assertFalse(menu.loading());
+        assertTrue(shows(menu, "empty"));
+        assertEquals(1, menu.errors.size());
+        assertEquals("sync", menu.errors.getFirst().getMessage());
+    }
+
+    @Test
+    void nullFutureFromLoadIsAFailedLoad(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        menu.source(cursor -> null);
+        menu.show();
+        env.tick();
+
+        assertFalse(menu.loading());
+        assertTrue(shows(menu, "empty"));
+        assertEquals(1, menu.errors.size());
+        assertInstanceOf(NullPointerException.class, menu.errors.getFirst());
+    }
+
+    @Test
+    void throwingOnLoadErrorStillRedraws(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        menu.throwOnError = true;
+        ManualSource source = new ManualSource();
+        menu.source(source);
+        menu.show();
+
+        source.last().completeExceptionally(new IllegalStateException("boom"));
+        assertDoesNotThrow(() -> env.tick());
+
+        assertEquals(1, menu.errors.size());
+        assertFalse(menu.loading());
+        assertFalse(shows(menu, "loading"));
+        assertTrue(shows(menu, "empty"));
     }
 
     @Test
