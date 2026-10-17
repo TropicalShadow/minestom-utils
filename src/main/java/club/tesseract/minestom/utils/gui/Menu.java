@@ -151,6 +151,11 @@ public abstract class Menu {
     /**
      * Opens {@code child} on top of this menu. This menu is suspended, not closed: {@link #back()} from the child
      * re-renders it and shows it again.
+     * <p>
+     * Ignored, with no state change, unless this menu is the player's open inventory (so a stale or closed menu can
+     * never push itself), and when {@code child} is this menu or already in the player's navigation stack (no cycles).
+     * If the child does not open (its open is cancelled, or {@code show()} throws), the stack and this menu are left as
+     * they were and any exception is rethrown.
      *
      * @throws IllegalArgumentException if {@code child} belongs to another player
      */
@@ -159,11 +164,15 @@ public abstract class Menu {
             throw new IllegalArgumentException("Child menu belongs to " + child.player.getUsername()
                     + ", not " + this.player.getUsername());
         }
+        if (!isCurrent() || child == this) return;
         NavStack stack = this.player.getTag(NAV_TAG);
         if (stack == null) {
             stack = new NavStack();
             this.player.setTag(NAV_TAG, stack);
+        } else if (stack.contains(child)) {
+            return;
         }
+        Menu previousParent = child.parent;
         stack.push(this);
         this.suspended = true;
         child.suspended = false;
@@ -173,41 +182,51 @@ public abstract class Menu {
             child.show();
         } finally {
             child.navOpening = false;
-        }
-        if (isCurrent()) { // the open was refused: undo
-            stack.pop();
-            this.suspended = false;
-            child.parent = null;
+            if (isCurrent()) { // the child did not open: undo
+                stack.pop();
+                this.suspended = false;
+                child.parent = previousParent;
+            }
         }
     }
 
     /**
-     * Returns to the parent: re-renders it with {@link #refresh()} and shows it. With no parent, closes the inventory.
+     * Returns to the parent: re-renders it with {@link #refresh()} and shows it. Ancestors that were closed while
+     * suspended (by {@link #close()}) are skipped and dropped; with no live parent, closes the inventory.
      * Does nothing unless this menu is the player's open inventory, so stale callbacks cannot navigate.
+     * If the parent does not open (its open is cancelled, or rendering throws), it stays on the stack, this menu stays
+     * open and any exception is rethrown.
      */
     public final void back() {
         if (!isCurrent()) return;
         NavStack stack = this.player.getTag(NAV_TAG);
-        Menu target = stack == null ? null : stack.pop();
-        if (target == null || target.player != this.player) {
+        Menu target = null;
+        if (stack != null) {
+            while ((target = stack.pop()) != null) {
+                if (target.player == this.player && !target.closed) break;
+                target.suspended = false; // already closed, its onClose ran: drop it
+                target.parent = null;
+            }
+        }
+        if (target == null) {
             this.player.closeInventory();
             return;
         }
         target.suspended = false;
-        target.refresh();
         this.navLeaving = true;
         target.navOpening = true;
         try {
+            target.refresh();
             target.open(this.player);
         } finally {
             this.navLeaving = false;
             target.navOpening = false;
-        }
-        if (target.isCurrent()) {
-            this.parent = null;
-        } else { // the open was refused: stay on this menu
-            stack.push(target);
-            target.suspended = true;
+            if (target.isCurrent()) {
+                this.parent = null;
+            } else { // the parent did not open: stay on this menu
+                stack.push(target);
+                target.suspended = true;
+            }
         }
     }
 

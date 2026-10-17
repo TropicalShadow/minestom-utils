@@ -597,4 +597,221 @@ class MenuTest {
         assertEquals(0, stackSize(owner));
         assertTrue(menu.isCurrent());
     }
+
+    @Test
+    void closedSuspendedAncestorIsSkippedByBack(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu grandchild = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        child.openChild(grandchild);
+
+        child.close();
+        env.tick();
+        assertEquals(1, child.closes);
+        assertTrue(grandchild.isCurrent());
+
+        grandchild.back();
+
+        assertTrue(root.isCurrent());
+        assertEquals(0, stackSize(player));
+        assertEquals(1, child.closes);
+        assertEquals(1, grandchild.closes);
+        assertFalse(child.isCurrent());
+        player.closeInventory();
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+    }
+
+    @Test
+    void backWithOnlyClosedAncestorsClosesInventory(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        root.close();
+        env.tick();
+        assertEquals(1, root.closes);
+
+        child.back();
+
+        assertNull(player.getOpenInventory());
+        assertEquals(0, stackSize(player));
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+        assertEquals(1, root.renders);
+    }
+
+    @Test
+    void openChildFromNonCurrentMenuIsIgnored(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu other = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+
+        root.openChild(other);
+
+        assertTrue(child.isCurrent());
+        assertEquals(1, stackSize(player));
+        assertFalse(other.hasParent());
+        assertEquals(0, other.renders);
+
+        // A closed menu cannot resurrect itself either.
+        child.back();
+        root.close();
+        env.tick();
+        root.openChild(other);
+        assertNull(player.getOpenInventory());
+        assertEquals(0, stackSize(player));
+        assertEquals(1, root.closes);
+    }
+
+    @Test
+    void openChildOfSelfOrAncestorIsIgnored(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+
+        child.openChild(child);
+        child.openChild(root);
+
+        assertTrue(child.isCurrent());
+        assertEquals(1, stackSize(player));
+        assertEquals(1, child.renders);
+        assertEquals(1, root.renders);
+        assertEquals(0, root.closes);
+        assertEquals(0, child.closes);
+    }
+
+    @Test
+    void openChildRestoresStateWhenChildRenderThrows(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu bad = new TestMenu(player);
+        bad.renderer = m -> { throw new IllegalStateException("boom"); };
+        root.show();
+
+        assertThrows(IllegalStateException.class, () -> root.openChild(bad));
+
+        assertTrue(root.isCurrent());
+        assertEquals(0, stackSize(player));
+        assertFalse(bad.hasParent());
+        // Not left suspended: being replaced closes it normally.
+        player.openInventory(new Inventory(InventoryType.CHEST_1_ROW, Component.text("other")));
+        assertEquals(1, root.closes);
+    }
+
+    @Test
+    void backRestoresStateWhenParentRenderThrows(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        AtomicInteger fail = new AtomicInteger();
+        root.renderer = m -> { if (fail.get() == 1) throw new IllegalStateException("boom"); };
+        root.show();
+        root.openChild(child);
+        fail.set(1);
+
+        assertThrows(IllegalStateException.class, child::back);
+
+        assertTrue(child.isCurrent());
+        assertTrue(child.hasParent());
+        assertEquals(1, stackSize(player));
+        assertEquals(0, root.closes);
+
+        fail.set(0);
+        child.back();
+        assertTrue(root.isCurrent());
+        assertEquals(0, stackSize(player));
+        assertEquals(0, root.closes);
+    }
+
+    @Test
+    void doubleBackIsIgnoredOnTheStaleMenu(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu grandchild = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        child.openChild(grandchild);
+
+        grandchild.back();
+        grandchild.back();
+
+        assertTrue(child.isCurrent());
+        assertEquals(1, stackSize(player));
+        assertEquals(1, grandchild.closes);
+        assertEquals(0, child.closes);
+    }
+
+    @Test
+    void backFromClosedChildIsIgnored(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        child.close();
+        env.tick();
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+
+        child.back();
+
+        assertNull(player.getOpenInventory());
+        assertEquals(0, stackSize(player));
+        assertEquals(1, root.closes);
+        assertEquals(1, root.renders);
+    }
+
+    @Test
+    void plainShowOfSuspendedRootResumesIt(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        AtomicInteger rootClicks = new AtomicInteger();
+        root.renderer = m -> m.put(0, STONE, ClickHandlers.any(c -> rootClicks.incrementAndGet()));
+        root.show();
+        root.openChild(child);
+
+        root.show();
+
+        assertTrue(root.isCurrent());
+        assertFalse(root.isClosed());
+        assertEquals(0, root.closes);
+        assertEquals(1, child.closes);
+        assertEquals(0, stackSize(player));
+        click(player, root.getInventory(), 0, 0, ClickType.PICKUP);
+        assertEquals(1, rootClicks.get());
+        player.closeInventory();
+        assertEquals(1, root.closes);
+    }
+
+    @Test
+    void threeLevelChainEndedByRawInventoryClosesEachOnce(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu grandchild = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        child.openChild(grandchild);
+
+        player.openInventory(new Inventory(InventoryType.CHEST_1_ROW, Component.text("other")));
+
+        assertEquals(0, stackSize(player));
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+        assertEquals(1, grandchild.closes);
+        assertFalse(player.eventNode().hasListener(InventoryOpenEvent.class));
+        assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
+    }
 }

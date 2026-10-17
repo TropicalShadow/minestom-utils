@@ -23,6 +23,11 @@ public final class NavStack {
         return this.menus.poll();
     }
 
+    /** True when {@code menu} is anywhere in the stack. */
+    public boolean contains(@NotNull Menu menu) {
+        return this.menus.contains(menu);
+    }
+
     public boolean isEmpty() {
         return this.menus.isEmpty();
     }
