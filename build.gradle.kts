@@ -76,6 +76,7 @@ java {
 tasks {
     test {
         useJUnitPlatform()
+        systemProperty("minestom.inside-test", "true") // net.minestom:testing creates players off virtual threads
     }
 
     compileJava {

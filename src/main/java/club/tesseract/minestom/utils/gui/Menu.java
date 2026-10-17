@@ -4,8 +4,9 @@ import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventListener;
+import net.minestom.server.event.inventory.InventoryCloseEvent;
+import net.minestom.server.event.inventory.InventoryOpenEvent;
 import net.minestom.server.event.inventory.InventoryPreClickEvent;
-import net.minestom.server.event.trait.InventoryEvent;
 import net.minestom.server.inventory.Inventory;
 import net.minestom.server.inventory.InventoryType;
 import net.minestom.server.inventory.click.Click;
@@ -13,15 +14,24 @@ import net.minestom.server.item.ItemStack;
 import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Utility class for creating menus
- * {@link Menu#close()} should be called when the menu is no longer needed to prevent memory leaks
+ * Base class for chest-style menus shown to one player.
+ * <p>
+ * Subclasses draw their contents in {@link #render()} with {@link #set(int, ItemStack, ClickHandlers)} and open the
+ * menu with {@link #show()}. {@link #refresh()} clears and re-draws.
+ * <p>
+ * Click model: every click is cancelled while the menu is open, on handled and unhandled menu slots, in the player's
+ * own inventory (including shift-click from it), number keys, drag and double click. The handler set for a slot then
+ * runs. {@link #allowPlayerInventory(boolean)} lets clicks that stay inside the player's own inventory through; clicks
+ * that would move items into or out of the menu stay cancelled.
+ * <p>
+ * Lifecycle: listeners are attached when the menu's inventory opens and removed when it closes (by the player, by
+ * {@link #close()}, or because the player opened another inventory). {@link #onClose(Player)} runs once each time.
+ *
  * @author Mudkjp
  * @see Inventory
  * @since 0.0.1
@@ -31,9 +41,17 @@ public abstract class Menu {
 
     protected final Player player;
     protected final Inventory inventory;
-    protected final List<EventListener<? extends @NotNull InventoryEvent>> listeners;
-    protected final HashMap<Integer, EventListener<? extends @NotNull InventoryEvent>> clickHandlers = new HashMap<>();
-    private transient boolean closing = false;
+
+    private final Map<Integer, ClickHandlers> handlers = new HashMap<>();
+    private final EventListener<InventoryPreClickEvent> menuClickListener;
+    private final EventListener<InventoryCloseEvent> closeListener;
+    private final EventListener<InventoryPreClickEvent> playerInventoryClickListener;
+    private final EventListener<InventoryOpenEvent> replacedListener;
+
+    private boolean allowPlayerInventory = false;
+    private boolean attached = false;
+    private boolean closed = false;
+    private boolean closing = false;
 
     protected Menu(@NotNull Player player, @NotNull InventoryType type, @NotNull String title) {
         this(player, type, Component.translatable(title));
@@ -42,12 +60,54 @@ public abstract class Menu {
     protected Menu(@NotNull Player player, @NotNull InventoryType type, @NotNull Component title) {
         this.player = player;
         this.inventory = new Inventory(type, title);
-        this.listeners = new ArrayList<>();
         this.inventory.setTag(MENU_TAG, this);
+
+        this.menuClickListener = EventListener.of(InventoryPreClickEvent.class, this::onMenuClick);
+        this.closeListener = EventListener.of(InventoryCloseEvent.class, event -> {
+            if (event.getPlayer() == this.player) detach();
+        });
+        this.playerInventoryClickListener = EventListener.of(InventoryPreClickEvent.class, this::onPlayerInventoryClick);
+        this.replacedListener = EventListener.of(InventoryOpenEvent.class, event -> {
+            if (event.getInventory() != this.inventory && !event.isCancelled()) detach();
+        });
+        // Lives as long as the inventory: re-attaches whenever this inventory is opened, however it is opened.
+        this.inventory.eventNode().addListener(InventoryOpenEvent.class, event -> {
+            if (event.getPlayer() == this.player && !event.isCancelled()) attach();
+        });
+    }
+
+    /** Draws the menu. Called by {@link #show()} and {@link #refresh()}; the default draws nothing. */
+    protected void render() {
+    }
+
+    /** Runs once when the menu stops being shown (closed, or replaced by another inventory). */
+    protected void onClose(@NotNull Player player) {
+    }
+
+    /** Renders the menu, then opens it for its player. */
+    public final void show() {
+        render();
+        open(this.player);
+    }
+
+    /** Clears every slot and handler, then renders again. */
+    public final void refresh() {
+        clear();
+        render();
     }
 
     public void open(@NotNull Player player) {
         player.openInventory(this.inventory);
+    }
+
+    /** True while this menu's inventory is the player's open inventory. */
+    public boolean isCurrent() {
+        return this.player.getOpenInventory() == this.inventory;
+    }
+
+    /** True once the menu was closed or replaced, or {@link #close()} was called; false again if it is reopened. */
+    public final boolean isClosed() {
+        return this.closed;
     }
 
     @NotNull
@@ -60,47 +120,81 @@ public abstract class Menu {
         return this.inventory;
     }
 
+    protected final void set(int slot, ItemStack item, ClickHandlers handlers) {
+        this.inventory.setItemStack(slot, item);
+        this.handlers.put(slot, handlers);
+    }
+
     protected final void set(int slot, ItemStack itemStack, Consumer<Click> handler) {
-        this.inventory.setItemStack(slot, itemStack);
-        if(this.clickHandlers.containsKey(slot)) {
-            var oldListener = this.clickHandlers.get(slot);
-            this.inventory.eventNode().removeListener(oldListener);
-            this.listeners.remove(oldListener);
-        }
-        var listener = this.eventListener(slot, handler);
-        this.clickHandlers.put(slot, listener);
-        this.inventory.eventNode().addListener(listener);
-        this.listeners.add(listener);
+        this.set(slot, itemStack, ClickHandlers.any(handler));
     }
 
     protected final void set(int slot, ItemStack itemStack) {
-        this.set(slot, itemStack, (_) -> {});
+        this.set(slot, itemStack, ClickHandlers.none());
     }
 
     protected final void add(ItemStack itemStack) {
         this.inventory.addItemStack(itemStack);
     }
 
+    /** Lets clicks that stay inside the player's own inventory through. Off by default. */
+    protected final void allowPlayerInventory(boolean allow) {
+        this.allowPlayerInventory = allow;
+    }
+
     protected final void clear() {
-        this.listeners.forEach(this.inventory.eventNode()::removeListener);
+        this.handlers.clear();
         this.inventory.clear();
     }
 
+    /** Closes the menu on the next tick and removes its listeners. */
     protected void close() {
-        if(this.closing)return;
+        this.closed = true;
+        if (this.closing) return;
         this.closing = true;
-        MinecraftServer.getSchedulerManager().scheduleNextTick(() ->{
+        MinecraftServer.getSchedulerManager().scheduleNextTick(() -> {
             this.inventory.getViewers().forEach(Player::closeInventory);
+            detach();
             clear();
         });
     }
 
-    private EventListener<@NotNull InventoryPreClickEvent> eventListener(int slot, Consumer<Click> handler) {
-        return EventListener.of(InventoryPreClickEvent.class, event -> {
-            if (event.getSlot() == slot) {
-                event.setCancelled(true); // TODO - make this not as restrictive for GUI impl
-                handler.accept(event.getClick());
-            }
-        });
+    private void onMenuClick(InventoryPreClickEvent event) {
+        if (event.getInventory() != this.inventory) return;
+        event.setCancelled(true);
+        ClickHandlers slotHandlers = this.handlers.get(event.getSlot());
+        if (slotHandlers != null) slotHandlers.handle(event.getClick());
+    }
+
+    // Minestom reports clicks in the player's own inventory on the player inventory, with player-inventory slots,
+    // even while another inventory is open.
+    private void onPlayerInventoryClick(InventoryPreClickEvent event) {
+        if (event.getInventory() != this.player.getInventory() || !isCurrent()) return;
+        if (!this.allowPlayerInventory || movesIntoMenu(event.getClick())) event.setCancelled(true);
+    }
+
+    private static boolean movesIntoMenu(Click click) {
+        return click instanceof Click.LeftShift || click instanceof Click.RightShift || click instanceof Click.Double;
+    }
+
+    private void attach() {
+        this.closed = false;
+        if (this.attached) return;
+        this.attached = true;
+        this.inventory.eventNode().addListener(this.menuClickListener);
+        this.inventory.eventNode().addListener(this.closeListener);
+        this.player.eventNode().addListener(this.playerInventoryClickListener);
+        this.player.eventNode().addListener(this.replacedListener);
+    }
+
+    private void detach() {
+        this.closed = true;
+        if (!this.attached) return;
+        this.attached = false;
+        this.inventory.eventNode().removeListener(this.menuClickListener);
+        this.inventory.eventNode().removeListener(this.closeListener);
+        this.player.eventNode().removeListener(this.playerInventoryClickListener);
+        this.player.eventNode().removeListener(this.replacedListener);
+        onClose(this.player);
     }
 }
