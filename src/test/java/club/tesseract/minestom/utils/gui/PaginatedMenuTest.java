@@ -101,6 +101,10 @@ class PaginatedMenuTest {
             setItems(items);
         }
 
+        void items(List<Integer> items, boolean resetPage) {
+            setItems(items, resetPage);
+        }
+
         void source(PageSource<Integer> source) {
             setSource(source);
         }
@@ -198,6 +202,59 @@ class PaginatedMenuTest {
         // The footer hook's item survived every page change.
         assertEquals(ItemStack.of(Material.HOPPER), slot(menu, FOOTER_EXTRA_SLOT));
         assertTrue(player.getInventory().getCursorItem().isAir());
+    }
+
+    @Test
+    void setItemsWithResetPageJumpsToTheFirstPage(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        menu.items(range(0, 40));
+        menu.show();
+        click(player, menu.getInventory(), LAYOUT.next());
+        click(player, menu.getInventory(), LAYOUT.next());
+        assertContent(menu, range(36, 40));
+        int renders = menu.renders;
+
+        // A filter changed: the new list starts on page 1, in one redraw.
+        menu.items(range(0, 30), true);
+        assertContent(menu, range(0, 18));
+        assertTrue(slot(menu, LAYOUT.prev()).isAir());
+        assertEquals("next 1/2", name(slot(menu, LAYOUT.next())));
+        assertEquals(renders + 1, menu.renders);
+
+        // Without the flag the page is kept (clamped), as before.
+        click(player, menu.getInventory(), LAYOUT.next());
+        menu.items(range(0, 30), false);
+        assertContent(menu, range(18, 30));
+
+        // Not current: no redraw, the next show starts on page 1.
+        player.closeInventory();
+        renders = menu.renders;
+        menu.items(range(0, 30), true);
+        assertEquals(renders, menu.renders);
+        menu.show();
+        assertContent(menu, range(0, 18));
+    }
+
+    @Test
+    void setItemsWithResetPageLeavesAnAsyncSourceForTheFirstListPage(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        ManualSource source = new ManualSource();
+        menu.source(source);
+        menu.show();
+        source.last().complete(new Page<>(range(0, 18), 100L));
+        env.tick();
+        click(player, menu.getInventory(), LAYOUT.next());
+        source.last().complete(new Page<>(range(18, 36), 200L));
+        env.tick();
+
+        // Switching from the source (on its page 2) to a list starts the list on page 1.
+        menu.items(range(0, 40), true);
+
+        assertFalse(menu.loading());
+        assertContent(menu, range(0, 18));
+        assertEquals("next 1/3", name(slot(menu, LAYOUT.next())));
     }
 
     @Test

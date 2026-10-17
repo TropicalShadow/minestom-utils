@@ -24,7 +24,8 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * Two sources:
  * <ul>
- *     <li>{@link #setItems(List)}: an in-memory list, paged with {@link Pager}. The page count is exact.</li>
+ *     <li>{@link #setItems(List)}: an in-memory list, paged with {@link Pager}. The page count is exact.
+ *     {@link #setItems(List, boolean)} can jump back to the first page.</li>
  *     <li>{@link #setSource(PageSource)}: async cursor paging. The menu keeps the cursors of earlier pages for
  *     "previous". The page count is unknown, so the count handed to {@link ButtonStyle} is the current page (1-based)
  *     plus one when a next page exists, else the current page. While a page loads, the content area shows
@@ -145,6 +146,15 @@ public abstract class PaginatedMenu<T> extends Menu {
      * page, clamped to the new page count, and redraws if the menu is current.
      */
     protected final void setItems(@NotNull List<T> items) {
+        setItems(items, false);
+    }
+
+    /**
+     * Like {@link #setItems(List)}, but with {@code resetPage} true the menu jumps to the first page instead of keeping
+     * the current one, in a single redraw: use it when the list was re-filtered or re-sorted. With {@code false} it is
+     * exactly {@link #setItems(List)}.
+     */
+    protected final void setItems(@NotNull List<T> items, boolean resetPage) {
         this.generation++;
         this.source = null;
         this.loading = false;
@@ -152,9 +162,10 @@ public abstract class PaginatedMenu<T> extends Menu {
         this.cursor = null;
         this.nextCursor = null;
         this.items = Collections.unmodifiableList(new ArrayList<>(items));
-        this.page = pager().clamp(this.page, this.items.size());
+        this.page = resetPage ? 0 : pager().clamp(this.page, this.items.size());
         if (isCurrent()) refresh();
     }
+
 
     /** Pages through {@code source} by cursor, starting at the first page (loads it now). */
     protected final void setSource(@NotNull PageSource<T> source) {
