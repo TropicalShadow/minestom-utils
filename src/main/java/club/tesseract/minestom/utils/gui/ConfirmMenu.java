@@ -21,6 +21,9 @@ import org.slf4j.LoggerFactory;
  * Rendering the menu again (show, refresh, back) starts a new decision. Either callback may open another inventory:
  * after a click the menu is then not closed over it, and after Esc the deferred {@code onCancel} opens it once the
  * close has finished, so it stays open.
+ * When another inventory replaced the menu, that inventory is already open when {@code onCancel} runs; check
+ * {@code player.getOpenInventory()} before opening one.
+ * Like {@link Menu#onClose(Player)}, {@code onCancel} does not run if the player disconnects.
  */
 public class ConfirmMenu extends Menu {
     public static final int CONFIRM_SLOT = 11;
