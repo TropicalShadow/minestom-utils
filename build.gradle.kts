@@ -39,6 +39,9 @@ dependencies {
     api(libs.bytesocks.java.client)
     /* End of Spark */
 
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(libs.minestom.testing)
     testImplementation(libs.logback)
     testImplementation(libs.minestom)
     testImplementation(libs.minestom.polar)

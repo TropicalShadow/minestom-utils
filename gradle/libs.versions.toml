@@ -12,6 +12,7 @@ fastutil = "8.5.18"
 axiom = "0.0.4"
 spark = "1.10-SNAPSHOT"
 bytesocks-java-client = "1.0-SNAPSHOT"
+junit = "5.13.4"
 
 
 [libraries]
@@ -31,3 +32,6 @@ fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
 minestom-axiom = { module = "fr.ghostrider584:axiom-minestom", version.ref = "axiom" }
 minestom-spark = { module = "dev.lu15:spark-minestom", version.ref = "spark" }
 bytesocks-java-client = { module = "me.lucko:bytesocks-java-client", version.ref = "bytesocks-java-client" }
+minestom-testing = { module = "net.minestom:testing", version.ref = "minestom" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
