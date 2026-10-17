@@ -101,4 +101,31 @@ class ToggleTest {
         assertEquals(OFF, menu.getInventory().getItemStack(1));
         assertEquals(1, a.get());
     }
+
+    @Test
+    void toggleStillWorksAfterRefresh(Env env) {
+        Player player = player(env);
+        TogglesMenu menu = new TogglesMenu(player);
+        menu.show();
+        menu.refresh();
+        click(player, menu.getInventory(), 5, 0);
+        assertEquals(List.of(true), menu.changes);
+        assertEquals(ON, menu.getInventory().getItemStack(5));
+    }
+
+    @Test
+    void onChangeThatDoesNotStoreLeavesItemUnchanged(Env env) {
+        Player player = player(env);
+        List<Boolean> seen = new ArrayList<>();
+        Menu menu = new Menu(player, InventoryType.CHEST_3_ROW, Component.text("t")) {
+            @Override protected void render() {
+                Toggle.set(this, 0, () -> false, on -> on ? ON : OFF, seen::add);
+            }
+        };
+        menu.show();
+        click(player, menu.getInventory(), 0, 0);
+        click(player, menu.getInventory(), 0, 0);
+        assertEquals(List.of(true, true), seen);
+        assertEquals(OFF, menu.getInventory().getItemStack(0));
+    }
 }

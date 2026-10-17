@@ -195,4 +195,62 @@ class ConfirmMenuTest {
         click(player, menu.getInventory(), 11, 0);
         assertEquals(2, counts.confirm.get());
     }
+
+    @Test
+    void callbackOpeningAnotherMenuKeepsItOpen(Env env) {
+        for (int slot : new int[]{11, 15}) {
+            Player player = player(env);
+            ParentMenu next = new ParentMenu(player);
+            Runnable open = next::show;
+            ConfirmMenu menu = new ConfirmMenu(player, Component.text("x"), SUBJECT, STYLE, open, open);
+            menu.show();
+            click(player, menu.getInventory(), slot, 0);
+            assertSame(next.getInventory(), player.getOpenInventory(), "slot " + slot);
+            click(player, next.getInventory(), 0, 0);
+            assertSame(next.getInventory(), player.getOpenInventory());
+        }
+    }
+
+    @Test
+    void refreshAndReopenStartsNewDecision(Env env) {
+        Player player = player(env);
+        Counts counts = new Counts();
+        ConfirmMenu menu = counts.menu(player);
+        menu.show();
+        click(player, menu.getInventory(), 11, 0);
+        menu.refresh();
+        menu.open(player);
+        click(player, menu.getInventory(), 11, 0);
+        assertEquals(2, counts.confirm.get());
+    }
+
+    @Test
+    void parentClosedWhileSuspendedStillRunsOneCallbackAndCloses(Env env) {
+        Player player = player(env);
+        ParentMenu parent = new ParentMenu(player);
+        parent.show();
+        Counts counts = new Counts();
+        ConfirmMenu menu = counts.menu(player);
+        parent.openChild(menu);
+        parent.close();
+        click(player, menu.getInventory(), 11, 0);
+        assertEquals(1, counts.confirm.get());
+        assertEquals(0, counts.cancel.get());
+        assertNull(player.getOpenInventory());
+    }
+
+    @Test
+    void confirmThenEscInSameTickWithParentRunsCallbackOnly(Env env) {
+        Player player = player(env);
+        ParentMenu parent = new ParentMenu(player);
+        parent.show();
+        Counts counts = new Counts();
+        ConfirmMenu menu = counts.menu(player);
+        parent.openChild(menu);
+        click(player, menu.getInventory(), 11, 0);
+        player.closeInventory();
+        env.tick();
+        assertEquals(1, counts.confirm.get());
+        assertEquals(0, counts.cancel.get());
+    }
 }

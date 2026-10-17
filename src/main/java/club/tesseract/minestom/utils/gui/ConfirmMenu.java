@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * {@link #back()} if it has a parent, else by closing the inventory. Closing without a click (Esc, or another
  * inventory replacing the menu) runs {@code onCancel}; the close that follows a click does not.
  * A callback that throws is logged at warn level; the menu is still left and the other callback does not run.
- * Showing the menu again starts a new decision.
+ * Rendering the menu again (show, refresh, back) starts a new decision. If a callback opened another inventory, it is left open.
  */
 public class ConfirmMenu extends Menu {
     public static final int CONFIRM_SLOT = 11;
@@ -41,13 +41,8 @@ public class ConfirmMenu extends Menu {
     }
 
     @Override
-    public void show() {
-        this.decided = false;
-        super.show();
-    }
-
-    @Override
     protected void render() {
+        this.decided = false; // every show, refresh or back() into this menu starts a new decision
         fillBorder(this.style.filler()); // first: it wipes anything already on the border slots
         set(CONFIRM_SLOT, this.style.confirm(), click -> decide(this.onConfirm));
         set(SUBJECT_SLOT, this.subject);
@@ -68,7 +63,7 @@ public class ConfirmMenu extends Menu {
             run(callback);
         } finally {
             if (hasParent()) back();
-            else this.player.closeInventory();
+            else if (isCurrent()) this.player.closeInventory(); // the callback may have opened something else
         }
     }
 

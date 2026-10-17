@@ -20,7 +20,8 @@ public final class Toggle {
     }
 
     /**
-     * Draws the toggle on {@code slot} and wires its click.
+     * Draws the toggle on {@code slot} and wires its click. Call it from {@code render()}: {@code refresh()} wipes every
+     * handler, so a toggle set elsewhere stops working after a refresh.
      *
      * @param state    the current value, read on every draw and click
      * @param render   the item for a value
