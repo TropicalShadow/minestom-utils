@@ -47,7 +47,7 @@ import java.util.function.Consumer;
  * {@link #onClose(Player)} does not run); {@link #back()} re-renders the suspended parent from its in-memory state and
  * shows it again. The chain ends when the player closes the inventory, another inventory replaces a menu in the chain,
  * or a menu is opened with plain {@link #show()}: the player's stack is cleared and every suspended ancestor's
- * {@link #onClose(Player)} runs once. The stack lives on the player in {@link #NAV_TAG}.
+ * {@link #onClose(Player)} runs once. The stack lives on the player (a transient tag), so it goes away with them.
  *
  * @author Mudkjp
  * @see Inventory
@@ -56,7 +56,7 @@ import java.util.function.Consumer;
 public abstract class Menu {
     public static final Tag<@NotNull Menu> MENU_TAG = Tag.Transient("menu");
     /** The player's navigation stack: menus {@link #back()} can return to. */
-    public static final Tag<@NotNull NavStack> NAV_TAG = Tag.Transient("menu-nav");
+    static final Tag<@NotNull NavStack> NAV_TAG = Tag.Transient("menu-nav");
     private static final Logger LOGGER = LoggerFactory.getLogger(Menu.class);
 
     protected final Player player;
@@ -120,6 +120,10 @@ public abstract class Menu {
      * inventory. When replaced, it runs while the new inventory's open event is processed, so {@link #isCurrent()} is
      * still true inside this hook. It does not run when the player disconnects, nor while the menu is suspended by
      * {@link #openChild(Menu)}; a suspended menu's runs once when the navigation chain ends without returning to it.
+     * <p>
+     * Do not open an inventory synchronously from here: when the player closed the menu, Minestom clears the open
+     * inventory after this hook returns, so the new one would be lost. Schedule it for the next tick
+     * ({@code player.scheduler().scheduleNextTick(...)}).
      */
     protected void onClose(@NotNull Player player) {
     }
@@ -155,7 +159,7 @@ public abstract class Menu {
 
     /**
      * Opens {@code child} on top of this menu. This menu is suspended, not closed: {@link #back()} from the child
-     * re-renders it and shows it again.
+     * re-renders it and shows it again. The parent must draw in {@link #render()}: that is all {@code back()} re-runs.
      * <p>
      * Ignored, with no state change, unless this menu is the player's open inventory (so a stale or closed menu can
      * never push itself), and when {@code child} is this menu or already in the player's navigation stack (no cycles).
@@ -196,7 +200,8 @@ public abstract class Menu {
     }
 
     /**
-     * Returns to the parent: re-renders it with {@link #refresh()} and shows it. Ancestors that were closed while
+     * Returns to the parent: re-renders it with {@link #refresh()} and shows it (the parent must draw in
+     * {@link #render()}). Ancestors that were closed while
      * suspended (by {@link #close()}) are skipped and dropped; with no live parent, closes the inventory.
      * Does nothing unless this menu is the player's open inventory, so stale callbacks cannot navigate.
      * If the parent does not open (its open is cancelled, or rendering throws), it stays on the stack, this menu stays
@@ -281,7 +286,7 @@ public abstract class Menu {
     }
 
     /** True while this menu's inventory is the player's open inventory. */
-    public boolean isCurrent() {
+    public final boolean isCurrent() {
         return this.player.getOpenInventory() == this.inventory;
     }
 
@@ -313,7 +318,12 @@ public abstract class Menu {
         this.set(slot, itemStack, ClickHandlers.none());
     }
 
-    /** Puts {@code item} on every border slot of the inventory (see {@link Layout#borderSlots()}), with no handler. */
+    /**
+     * Puts {@code item} on every border slot of the inventory (see {@link Layout#borderSlots()}), with no handler.
+     * Call it before placing items: it overwrites the whole border, including the footer row.
+     *
+     * @throws IllegalArgumentException if the inventory is not a chest type
+     */
     protected final void fillBorder(@NotNull ItemStack item) {
         for (int slot : Layout.of(this.inventory.getInventoryType()).borderSlots()) set(slot, item);
     }

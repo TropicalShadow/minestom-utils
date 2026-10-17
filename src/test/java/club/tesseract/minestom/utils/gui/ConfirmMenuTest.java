@@ -103,6 +103,7 @@ class ConfirmMenuTest {
         click(player, menu.getInventory(), 15, 0);
         click(player, menu.getInventory(), 11, 0);
         player.closeInventory();
+        env.tick();
         assertEquals(1, counts.cancel.get());
         assertEquals(0, counts.confirm.get());
         assertNull(player.getOpenInventory());
@@ -116,6 +117,9 @@ class ConfirmMenuTest {
         menu.show();
         player.closeInventory();
         player.closeInventory();
+        assertEquals(0, counts.cancel.get()); // runs on the next tick
+        env.tick();
+        env.tick();
         assertEquals(1, counts.cancel.get());
         assertEquals(0, counts.confirm.get());
     }
@@ -126,6 +130,7 @@ class ConfirmMenuTest {
         Counts counts = new Counts();
         counts.menu(player).show();
         new ParentMenu(player).show();
+        env.tick();
         assertEquals(1, counts.cancel.get());
     }
 
@@ -157,6 +162,7 @@ class ConfirmMenuTest {
         click(player, menu.getInventory(), 15, 0);
         assertSame(parent.getInventory(), player.getOpenInventory());
         player.closeInventory();
+        env.tick();
         assertEquals(1, counts.cancel.get());
         assertEquals(0, counts.confirm.get());
     }
@@ -181,6 +187,7 @@ class ConfirmMenuTest {
                 confirm::incrementAndGet, () -> { throw new IllegalStateException("boom"); });
         menu.show();
         assertDoesNotThrow(() -> { player.closeInventory(); });
+        assertDoesNotThrow(() -> env.tick());
         assertEquals(0, confirm.get());
     }
 
@@ -252,5 +259,27 @@ class ConfirmMenuTest {
         env.tick();
         assertEquals(1, counts.confirm.get());
         assertEquals(0, counts.cancel.get());
+    }
+
+    @Test
+    void escWhoseCancelOpensAnotherMenuLeavesItOpen(Env env) {
+        Player player = player(env);
+        ParentMenu next = new ParentMenu(player);
+        AtomicInteger confirm = new AtomicInteger();
+        ConfirmMenu menu = new ConfirmMenu(player, Component.text("x"), SUBJECT, STYLE,
+                confirm::incrementAndGet, next::show);
+        menu.show();
+
+        player.closeInventory();
+        env.tick();
+
+        assertSame(next.getInventory(), player.getOpenInventory());
+        assertTrue(next.isCurrent());
+        assertFalse(next.isClosed());
+        click(player, next.getInventory(), 0, 0);
+        assertEquals(ItemStack.of(Material.STONE), next.getInventory().getItemStack(0));
+        assertTrue(player.getInventory().getCursorItem().isAir());
+        assertSame(next.getInventory(), player.getOpenInventory());
+        assertEquals(0, confirm.get());
     }
 }

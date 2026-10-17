@@ -14,9 +14,13 @@ import org.slf4j.LoggerFactory;
  * Exactly one of the callbacks runs, once. The first click on confirm or cancel decides: the decision is recorded
  * before any callback runs (so rapid extra clicks do nothing), then the callback runs, then the menu is left with
  * {@link #back()} if it has a parent, else by closing the inventory. Closing without a click (Esc, or another
- * inventory replacing the menu) runs {@code onCancel}; the close that follows a click does not.
+ * inventory replacing the menu) runs {@code onCancel} on the player's next tick (the decision itself is recorded at
+ * once), because Minestom is still closing the inventory when the menu hears about it; the close that follows a click
+ * does not run it. A click decides and runs its callback synchronously.
  * A callback that throws is logged at warn level; the menu is still left and the other callback does not run.
- * Rendering the menu again (show, refresh, back) starts a new decision. If a callback opened another inventory, it is left open.
+ * Rendering the menu again (show, refresh, back) starts a new decision. Either callback may open another inventory:
+ * after a click the menu is then not closed over it, and after Esc the deferred {@code onCancel} opens it once the
+ * close has finished, so it stays open.
  */
 public class ConfirmMenu extends Menu {
     public static final int CONFIRM_SLOT = 11;
@@ -53,7 +57,8 @@ public class ConfirmMenu extends Menu {
     protected void onClose(@NotNull Player player) {
         if (this.decided) return;
         this.decided = true;
-        run(this.onCancel);
+        // Inside Minestom's close: it clears the open inventory after this returns, so opening a menu here would be lost.
+        player.scheduler().scheduleNextTick(() -> run(this.onCancel));
     }
 
     private void decide(Runnable callback) {

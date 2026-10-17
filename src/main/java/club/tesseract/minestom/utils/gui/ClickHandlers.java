@@ -13,6 +13,8 @@ import java.util.function.Consumer;
  * click, {@code shift} for a left or right shift-click, and {@code any} for everything else (number keys, drop key,
  * ...) or when the specific handler is not set. A double click runs no handler: the client sends two plain left clicks
  * before it, so handlers should be idempotent.
+ * <p>
+ * Instances are mutable builders: build a new one per slot and do not share one across slots or menus.
  *
  * <pre>{@code
  * set(13, item, ClickHandlers.any(c -> buy()).right(c -> preview()));

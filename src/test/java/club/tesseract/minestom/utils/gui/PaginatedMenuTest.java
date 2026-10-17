@@ -61,6 +61,7 @@ class PaginatedMenuTest {
         final List<Throwable> errors = new ArrayList<>();
         boolean throwOnError = false;
         int renders = 0;
+        int failFooterDraws = 0;
 
         @Override
         protected void onLoadError(Throwable error) {
@@ -88,6 +89,10 @@ class PaginatedMenuTest {
 
         @Override
         protected void renderFooter() {
+            if (failFooterDraws > 0) {
+                failFooterDraws--;
+                throw new IllegalStateException("footer failed");
+            }
             renders++;
             set(FOOTER_EXTRA_SLOT, ItemStack.of(Material.HOPPER));
         }
@@ -537,5 +542,22 @@ class PaginatedMenuTest {
         stale.complete("late");
         env.tick();
         assertEquals(0, late.get());
+    }
+
+    @Test
+    void throwingFooterOnLoadingDrawStillShowsLoadedPage(Env env) {
+        Player player = player(env);
+        ListMenu menu = new ListMenu(player);
+        menu.show();
+        ManualSource source = new ManualSource();
+        menu.failFooterDraws = 1;
+
+        assertDoesNotThrow(() -> menu.source(source));
+        source.last().complete(new Page<>(range(0, 5), null));
+        env.tick();
+
+        assertFalse(menu.loading());
+        assertContent(menu, range(0, 5));
+        assertEquals(ItemStack.of(Material.HOPPER), slot(menu, FOOTER_EXTRA_SLOT));
     }
 }

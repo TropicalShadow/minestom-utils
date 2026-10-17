@@ -237,9 +237,16 @@ public abstract class PaginatedMenu<T> extends Menu {
         } catch (RuntimeException e) {
             future = CompletableFuture.failedFuture(e);
         }
-        if (isCurrent()) refresh();
+        // Register first: a failing loading-state draw must not leave the menu loading forever.
         future.whenComplete((result, error) -> this.player.scheduler().scheduleNextTick(
                 () -> complete(loadGeneration, target, move, result, error)));
+        if (isCurrent()) {
+            try {
+                refresh();
+            } catch (RuntimeException e) {
+                LOGGER.warn("Drawing the loading state of menu {} failed", getClass().getName(), e);
+            }
+        }
     }
 
     /**

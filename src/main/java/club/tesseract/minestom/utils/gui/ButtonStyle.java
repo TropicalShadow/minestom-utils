@@ -21,6 +21,7 @@ public interface ButtonStyle {
     /** @param page the page shown now, 1-based */
     @NotNull ItemStack next(int page, int pageCount);
 
+    /** Unused by the library; provided for consumers that draw their own close button. */
     @NotNull ItemStack close();
 
     /** Shown in the content area while a page is loading. */

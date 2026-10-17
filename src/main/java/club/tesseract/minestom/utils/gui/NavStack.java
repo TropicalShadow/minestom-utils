@@ -8,9 +8,9 @@ import java.util.Deque;
 
 /**
  * The menus a player can go {@link Menu#back() back} to, newest last. One per player, kept on the player in
- * {@link Menu#NAV_TAG}, so it goes away with the player.
+ * {@code Menu.NAV_TAG}, so it goes away with the player. Internal to the menu framework.
  */
-public final class NavStack {
+final class NavStack {
     private final Deque<Menu> menus = new ArrayDeque<>();
 
     public void push(@NotNull Menu menu) {
