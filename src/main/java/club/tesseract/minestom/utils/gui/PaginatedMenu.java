@@ -166,7 +166,6 @@ public abstract class PaginatedMenu<T> extends Menu {
         if (isCurrent()) refresh();
     }
 
-
     /** Pages through {@code source} by cursor, starting at the first page (loads it now). */
     protected final void setSource(@NotNull PageSource<T> source) {
         this.source = source;

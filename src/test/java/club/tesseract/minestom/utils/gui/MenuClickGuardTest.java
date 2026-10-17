@@ -245,6 +245,25 @@ class MenuClickGuardTest {
     }
 
     @Test
+    void reshowingOverItselfKeepsTheOriginalDeadline(Env env) {
+        Player player = player(env);
+        GuardMenu parent = new GuardMenu(player);
+        GuardMenu child = new GuardMenu(player);
+        parent.show();
+        parent.openChild(child);
+        tick(env, Menu.DEFAULT_CLICK_GUARD_TICKS - 2);
+
+        child.show(); // over itself: not a transition, no fresh deadline
+        assertTrue(child.isCurrent());
+        click(player, child.getInventory(), SLOT);
+        assertIgnored(player, child, 0);
+
+        tick(env, 2); // DEFAULT_CLICK_GUARD_TICKS after the original open
+        click(player, child.getInventory(), SLOT);
+        assertEquals(1, child.clicks.get());
+    }
+
+    @Test
     void zeroGuardTicksDisablesTheGuard(Env env) {
         Player player = player(env);
         GuardMenu parent = new GuardMenu(player);

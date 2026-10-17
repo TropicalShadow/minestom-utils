@@ -57,6 +57,8 @@ import java.util.function.Consumer;
  * counter ({@link Player#getAliveTicks()}): still cancelled, with no handler run and no player-inventory click let
  * through. Each such open sets a fresh deadline, so the guard cannot get stuck. A menu opened with no inventory
  * open, or over a plain (non-menu) inventory, is not guarded; reopening a menu over itself keeps its deadline.
+ * A handler that closes the inventory and then opens the next menu is not guarded (nothing was open at that moment):
+ * open the next menu directly instead, without closing first.
  *
  * @author Mudkjp
  * @see Inventory
@@ -69,6 +71,7 @@ public abstract class Menu {
     /**
      * Default length of the menu-to-menu click guard, in ticks of the player's own tick counter
      * ({@link Player#getAliveTicks()}): 5 ticks, a quarter of a second at 20 TPS. See {@link #clickGuardTicks()}.
+     * A compile-time constant: code that reads it inlines the value, so recompile consumers when it changes.
      */
     public static final int DEFAULT_CLICK_GUARD_TICKS = 5;
     private static final Logger LOGGER = LoggerFactory.getLogger(Menu.class);
@@ -385,7 +388,10 @@ public abstract class Menu {
         this.inventory.addItemStack(itemStack);
     }
 
-    /** Lets clicks that stay inside the player's own inventory through. Off by default. */
+    /**
+     * Lets clicks that stay inside the player's own inventory through. Off by default. Player-inventory clicks are
+     * still frozen while the click guard is active (see {@link #clickGuardTicks()}).
+     */
     protected final void allowPlayerInventory(boolean allow) {
         this.allowPlayerInventory = allow;
     }
