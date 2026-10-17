@@ -39,6 +39,8 @@ class MenuTest {
     static final class TestMenu extends Menu {
         Consumer<TestMenu> renderer = m -> {};
         int closes = 0;
+        int renders = 0;
+        boolean parentAtRender = false;
 
         TestMenu(Player player) {
             super(player, InventoryType.CHEST_3_ROW, Component.text("test"));
@@ -46,6 +48,8 @@ class MenuTest {
 
         @Override
         protected void render() {
+            renders++;
+            parentAtRender = hasParent();
             renderer.accept(this);
         }
 
@@ -404,5 +408,193 @@ class MenuTest {
         assertEquals(1, menu.closes);
         assertFalse(menu.getInventory().eventNode().hasListener(InventoryCloseEvent.class));
         assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
+    }
+
+    private static int stackSize(Player player) {
+        NavStack stack = player.getTag(Menu.NAV_TAG);
+        return stack == null ? 0 : stack.size();
+    }
+
+    @Test
+    void childBackRestoresParentWithWorkingClicks(Env env) {
+        Player player = player(env);
+        TestMenu parent = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        AtomicInteger parentClicks = new AtomicInteger();
+        parent.renderer = m -> m.put(0, STONE.withAmount(parentClicks.get() + 1),
+                ClickHandlers.any(c -> parentClicks.incrementAndGet()));
+        child.renderer = m -> m.put(1, DIAMOND, ClickHandlers.any(c -> m.back()));
+        parent.show();
+        assertFalse(parent.hasParent());
+
+        parent.openChild(child);
+        assertTrue(child.isCurrent());
+        assertTrue(child.hasParent());
+        assertTrue(child.parentAtRender);
+        assertEquals(1, stackSize(player));
+        // Suspended, not torn down.
+        assertEquals(0, parent.closes);
+
+        parentClicks.set(4); // state changed while the child was open
+        click(player, child.getInventory(), 1, 0, ClickType.PICKUP);
+
+        assertTrue(parent.isCurrent());
+        assertFalse(parent.isClosed());
+        assertEquals(0, parent.closes);
+        assertEquals(1, child.closes);
+        assertEquals(2, parent.renders);
+        assertEquals(5, parent.getInventory().getItemStack(0).amount());
+        assertEquals(0, stackSize(player));
+        click(player, parent.getInventory(), 0, 0, ClickType.PICKUP);
+        assertEquals(5, parentClicks.get());
+        assertTrue(player.getInventory().getCursorItem().isAir());
+
+        // The parent is fully live again: closing it runs its onClose once.
+        player.closeInventory();
+        assertEquals(1, parent.closes);
+    }
+
+    @Test
+    void childGrandchildBackBackReturnsToRoot(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu grandchild = new TestMenu(player);
+        AtomicInteger rootClicks = new AtomicInteger();
+        root.renderer = m -> m.put(0, STONE, ClickHandlers.any(c -> rootClicks.incrementAndGet()));
+        root.show();
+        root.openChild(child);
+        child.openChild(grandchild);
+        assertEquals(2, stackSize(player));
+        assertTrue(grandchild.hasParent());
+
+        grandchild.back();
+        assertTrue(child.isCurrent());
+        assertTrue(child.hasParent());
+        assertEquals(1, stackSize(player));
+
+        child.back();
+        assertTrue(root.isCurrent());
+        assertFalse(root.hasParent());
+        assertEquals(0, stackSize(player));
+        assertEquals(0, root.closes);
+        assertEquals(1, child.closes);
+        assertEquals(1, grandchild.closes);
+        click(player, root.getInventory(), 0, 0, ClickType.PICKUP);
+        assertEquals(1, rootClicks.get());
+    }
+
+    @Test
+    void backWithNoParentClosesInventory(Env env) {
+        Player player = player(env);
+        TestMenu menu = new TestMenu(player);
+        menu.show();
+
+        menu.back();
+
+        assertNull(player.getOpenInventory());
+        assertEquals(1, menu.closes);
+    }
+
+    @Test
+    void showClearsTheStack(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu other = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        assertEquals(1, stackSize(player));
+
+        other.show();
+
+        assertEquals(0, stackSize(player));
+        assertFalse(other.hasParent());
+        assertFalse(other.parentAtRender);
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+        assertTrue(root.isClosed());
+
+        // Re-showing a former child plainly does not bring its old parent back.
+        child.show();
+        assertFalse(child.hasParent());
+        assertFalse(child.parentAtRender);
+        child.back();
+        assertNull(player.getOpenInventory());
+        assertEquals(1, root.closes);
+    }
+
+    @Test
+    void escOnChildEndsChainAndClosesEachAncestorOnce(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        TestMenu grandchild = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        child.openChild(grandchild);
+
+        player.closeInventory();
+
+        assertNull(player.getOpenInventory());
+        assertEquals(0, stackSize(player));
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+        assertEquals(1, grandchild.closes);
+        assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
+        assertFalse(player.eventNode().hasListener(InventoryOpenEvent.class));
+
+        player.openInventory(new Inventory(InventoryType.CHEST_1_ROW, Component.text("other")));
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+    }
+
+    @Test
+    void rawInventoryReplacingChildEndsChain(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+
+        player.openInventory(new Inventory(InventoryType.CHEST_1_ROW, Component.text("other")));
+
+        assertEquals(0, stackSize(player));
+        assertEquals(1, root.closes);
+        assertEquals(1, child.closes);
+        assertFalse(player.eventNode().hasListener(InventoryOpenEvent.class));
+    }
+
+    @Test
+    void navStackLivesOnThePlayer(Env env) {
+        Player player = player(env);
+        TestMenu root = new TestMenu(player);
+        TestMenu child = new TestMenu(player);
+        root.show();
+        root.openChild(child);
+        NavStack stack = player.getTag(Menu.NAV_TAG);
+        assertNotNull(stack);
+        assertEquals(1, stack.size());
+
+        player.remove();
+
+        // Nothing outside the player holds the stack: another player starts with none.
+        Player next = player(env);
+        assertNull(next.getTag(Menu.NAV_TAG));
+        TestMenu fresh = new TestMenu(next);
+        fresh.show();
+        assertFalse(fresh.hasParent());
+    }
+
+    @Test
+    void openChildForAnotherPlayerIsRefused(Env env) {
+        Player owner = player(env);
+        Player other = player(env);
+        TestMenu menu = new TestMenu(owner);
+        menu.show();
+
+        assertThrows(IllegalArgumentException.class, () -> menu.openChild(new TestMenu(other)));
+        assertEquals(0, stackSize(owner));
+        assertTrue(menu.isCurrent());
     }
 }
