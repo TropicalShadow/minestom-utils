@@ -29,8 +29,14 @@ import java.util.function.Consumer;
  * runs. {@link #allowPlayerInventory(boolean)} lets clicks that stay inside the player's own inventory through; clicks
  * that would move items into or out of the menu stay cancelled.
  * <p>
- * Lifecycle: listeners are attached when the menu's inventory opens and removed when it closes (by the player, by
+ * Double clicks are cancelled but run no handler. A vanilla double click also sends two plain left clicks first, so a
+ * handler can still run twice in quick succession: keep handlers idempotent (or guard purchases).
+ * <p>
+ * Lifecycle: the menu-slot click listener lives as long as the inventory and only ever cancels, so the menu's slots
+ * can never be taken even if the menu outlives its other listeners. The close listener and the player-inventory
+ * listeners are attached when the menu's inventory opens and removed when it closes (by the player, by
  * {@link #close()}, or because the player opened another inventory). {@link #onClose(Player)} runs once each time.
+ * A menu belongs to one player: {@link #open(Player)} refuses any other player.
  *
  * @author Mudkjp
  * @see Inventory
@@ -63,6 +69,8 @@ public abstract class Menu {
         this.inventory.setTag(MENU_TAG, this);
 
         this.menuClickListener = EventListener.of(InventoryPreClickEvent.class, this::onMenuClick);
+        // Never removed: dies with the inventory, so every click on the menu's slots is always cancelled.
+        this.inventory.eventNode().addListener(this.menuClickListener);
         this.closeListener = EventListener.of(InventoryCloseEvent.class, event -> {
             if (event.getPlayer() == this.player) detach();
         });
@@ -80,12 +88,16 @@ public abstract class Menu {
     protected void render() {
     }
 
-    /** Runs once when the menu stops being shown (closed, or replaced by another inventory). */
+    /**
+     * Runs once when the menu stops being shown: closed by the player, by {@link #close()}, or replaced by another
+     * inventory. When replaced, it runs while the new inventory's open event is processed, so {@link #isCurrent()} is
+     * still true inside this hook. It does not run when the player disconnects.
+     */
     protected void onClose(@NotNull Player player) {
     }
 
     /** Renders the menu, then opens it for its player. */
-    public final void show() {
+    public void show() {
         render();
         open(this.player);
     }
@@ -96,7 +108,16 @@ public abstract class Menu {
         render();
     }
 
+    /**
+     * Opens the menu for its player.
+     *
+     * @throws IllegalArgumentException if {@code player} is not the player this menu was built for
+     */
     public void open(@NotNull Player player) {
+        if (player != this.player) {
+            throw new IllegalArgumentException("Menu belongs to " + this.player.getUsername()
+                    + ", cannot open it for " + player.getUsername());
+        }
         player.openInventory(this.inventory);
     }
 
@@ -153,6 +174,7 @@ public abstract class Menu {
         if (this.closing) return;
         this.closing = true;
         MinecraftServer.getSchedulerManager().scheduleNextTick(() -> {
+            this.closing = false;
             this.inventory.getViewers().forEach(Player::closeInventory);
             detach();
             clear();
@@ -181,7 +203,6 @@ public abstract class Menu {
         this.closed = false;
         if (this.attached) return;
         this.attached = true;
-        this.inventory.eventNode().addListener(this.menuClickListener);
         this.inventory.eventNode().addListener(this.closeListener);
         this.player.eventNode().addListener(this.playerInventoryClickListener);
         this.player.eventNode().addListener(this.replacedListener);
@@ -191,7 +212,6 @@ public abstract class Menu {
         this.closed = true;
         if (!this.attached) return;
         this.attached = false;
-        this.inventory.eventNode().removeListener(this.menuClickListener);
         this.inventory.eventNode().removeListener(this.closeListener);
         this.player.eventNode().removeListener(this.playerInventoryClickListener);
         this.player.eventNode().removeListener(this.replacedListener);

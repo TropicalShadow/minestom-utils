@@ -11,7 +11,8 @@ import java.util.function.Consumer;
  * <p>
  * {@link #handle(Click)} runs the most specific handler: {@code left} for a left click, {@code right} for a right
  * click, {@code shift} for a left or right shift-click, and {@code any} for everything else (number keys, drop key,
- * double click, ...) or when the specific handler is not set.
+ * ...) or when the specific handler is not set. A double click runs no handler: the client sends two plain left clicks
+ * before it, so handlers should be idempotent.
  *
  * <pre>{@code
  * set(13, item, ClickHandlers.any(c -> buy()).right(c -> preview()));
@@ -55,8 +56,9 @@ public final class ClickHandlers {
         return this;
     }
 
-    /** Runs the most specific handler for {@code click}. */
+    /** Runs the most specific handler for {@code click}; does nothing for a double click. */
     public void handle(@NotNull Click click) {
+        if (click instanceof Click.Double) return;
         Consumer<Click> specific = switch (click) {
             case Click.Left _ -> left;
             case Click.Right _ -> right;

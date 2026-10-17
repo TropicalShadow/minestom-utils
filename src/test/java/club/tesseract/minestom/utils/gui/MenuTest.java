@@ -5,6 +5,7 @@ import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.inventory.InventoryCloseEvent;
+import net.minestom.server.event.inventory.InventoryOpenEvent;
 import net.minestom.server.event.inventory.InventoryPreClickEvent;
 import net.minestom.server.inventory.Inventory;
 import net.minestom.server.inventory.InventoryType;
@@ -211,12 +212,144 @@ class MenuTest {
 
         assertEquals(1, menu.closes);
         assertTrue(menu.isClosed());
-        assertFalse(menu.getInventory().eventNode().hasListener(InventoryPreClickEvent.class));
+        // The menu-slot click listener lives as long as the inventory (it only ever cancels); the close listener and
+        // the player-node listeners are gone.
         assertFalse(menu.getInventory().eventNode().hasListener(InventoryCloseEvent.class));
         assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
+        assertFalse(player.eventNode().hasListener(InventoryOpenEvent.class));
 
         player.closeInventory();
         assertEquals(1, menu.closes);
+    }
+
+    @Test
+    void cancelledOpenOfAnotherInventoryKeepsOldMenuCancelling(Env env) {
+        Player player = player(env);
+        TestMenu menu = new TestMenu(player);
+        AtomicInteger clicks = new AtomicInteger();
+        menu.renderer = m -> m.put(0, STONE, ClickHandlers.any(c -> clicks.incrementAndGet()));
+        menu.show();
+        menu.getInventory().setItemStack(5, STONE);
+        Inventory other = new Inventory(InventoryType.CHEST_1_ROW, Component.text("other"));
+        // Added to the player node after the menu's own listener, so it cancels after the menu has seen the event.
+        player.eventNode().addListener(InventoryOpenEvent.class, e -> {
+            if (e.getInventory() == other) e.setCancelled(true);
+        });
+
+        player.openInventory(other);
+
+        assertTrue(menu.isCurrent());
+        click(player, menu.getInventory(), 5, 0, ClickType.PICKUP);
+        assertEquals(STONE, menu.getInventory().getItemStack(5));
+        assertTrue(player.getInventory().getCursorItem().isAir());
+        click(player, menu.getInventory(), 0, 0, ClickType.PICKUP);
+        assertEquals(STONE, menu.getInventory().getItemStack(0));
+        assertTrue(player.getInventory().getCursorItem().isAir());
+        assertTrue(menu.closes <= 1);
+    }
+
+    @Test
+    void doubleClickIsCancelledAndRunsNoHandler(Env env) {
+        Player player = player(env);
+        TestMenu menu = new TestMenu(player);
+        AtomicInteger clicks = new AtomicInteger();
+        menu.renderer = m -> m.put(0, STONE, ClickHandlers.any(c -> clicks.incrementAndGet()));
+        menu.show();
+
+        click(player, menu.getInventory(), 0, 0, ClickType.PICKUP_ALL);
+
+        assertEquals(0, clicks.get());
+        assertEquals(STONE, menu.getInventory().getItemStack(0));
+        assertTrue(player.getInventory().getCursorItem().isAir());
+    }
+
+    @Test
+    void closeCanRunAgainAfterReopen(Env env) {
+        Player player = player(env);
+        TestMenu menu = new TestMenu(player);
+        menu.show();
+        menu.close();
+        env.tick();
+        assertNull(player.getOpenInventory());
+
+        menu.show();
+        assertFalse(menu.isClosed());
+        menu.close();
+        env.tick();
+
+        assertNull(player.getOpenInventory());
+        assertEquals(2, menu.closes);
+        assertTrue(menu.isClosed());
+    }
+
+    @Test
+    void openForAnotherPlayerIsRefused(Env env) {
+        Player owner = player(env);
+        Player other = player(env);
+        TestMenu menu = new TestMenu(owner);
+
+        assertThrows(IllegalArgumentException.class, () -> menu.open(other));
+        assertNull(other.getOpenInventory());
+    }
+
+    @Test
+    void reopeningSameMenuKeepsItAttached(Env env) {
+        Player player = player(env);
+        TestMenu menu = new TestMenu(player);
+        AtomicInteger clicks = new AtomicInteger();
+        menu.renderer = m -> m.put(0, STONE, ClickHandlers.any(c -> clicks.incrementAndGet()));
+        menu.show();
+        menu.show();
+
+        assertEquals(0, menu.closes);
+        assertFalse(menu.isClosed());
+        assertTrue(menu.isCurrent());
+        click(player, menu.getInventory(), 0, 0, ClickType.PICKUP);
+        assertEquals(1, clicks.get());
+        player.getInventory().setItemStack(0, DIAMOND);
+        click(player, menu.getInventory(), HOTBAR_0_WINDOW_SLOT, 0, ClickType.QUICK_MOVE);
+        assertEquals(DIAMOND, player.getInventory().getItemStack(0));
+    }
+
+    @Test
+    void replacingMenuFromClickHandler(Env env) {
+        Player player = player(env);
+        TestMenu a = new TestMenu(player);
+        TestMenu b = new TestMenu(player);
+        AtomicInteger bClicks = new AtomicInteger();
+        b.renderer = m -> m.put(1, STONE, ClickHandlers.any(c -> bClicks.incrementAndGet()));
+        a.renderer = m -> m.put(0, STONE, ClickHandlers.any(c -> b.show()));
+        a.show();
+
+        click(player, a.getInventory(), 0, 0, ClickType.PICKUP);
+
+        assertEquals(1, a.closes);
+        assertTrue(a.isClosed());
+        assertTrue(b.isCurrent());
+        assertEquals(STONE, a.getInventory().getItemStack(0));
+        click(player, b.getInventory(), 1, 0, ClickType.PICKUP);
+        assertEquals(1, bClicks.get());
+        assertEquals(STONE, b.getInventory().getItemStack(1));
+        assertTrue(player.getInventory().getCursorItem().isAir());
+        assertEquals(1, a.closes);
+        assertEquals(0, b.closes);
+    }
+
+    @Test
+    void refreshFromInsideClickHandler(Env env) {
+        Player player = player(env);
+        TestMenu menu = new TestMenu(player);
+        AtomicInteger clicks = new AtomicInteger();
+        menu.renderer = m -> m.put(0, STONE.withAmount(clicks.get() + 1),
+                ClickHandlers.any(c -> { clicks.incrementAndGet(); m.refresh(); }));
+        menu.show();
+
+        click(player, menu.getInventory(), 0, 0, ClickType.PICKUP);
+        click(player, menu.getInventory(), 0, 0, ClickType.PICKUP);
+
+        assertEquals(2, clicks.get());
+        assertEquals(3, menu.getInventory().getItemStack(0).amount());
+        assertTrue(player.getInventory().getCursorItem().isAir());
     }
 
     @Test
@@ -231,7 +364,7 @@ class MenuTest {
 
         assertNull(player.getOpenInventory());
         assertEquals(1, menu.closes);
-        assertFalse(menu.getInventory().eventNode().hasListener(InventoryPreClickEvent.class));
+        assertFalse(menu.getInventory().eventNode().hasListener(InventoryCloseEvent.class));
         assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
     }
 
@@ -269,7 +402,7 @@ class MenuTest {
         assertFalse(menu.isCurrent());
         assertTrue(menu.isClosed());
         assertEquals(1, menu.closes);
-        assertFalse(menu.getInventory().eventNode().hasListener(InventoryPreClickEvent.class));
+        assertFalse(menu.getInventory().eventNode().hasListener(InventoryCloseEvent.class));
         assertFalse(player.eventNode().hasListener(InventoryPreClickEvent.class));
     }
 }
