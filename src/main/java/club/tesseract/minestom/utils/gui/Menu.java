@@ -14,6 +14,7 @@ import net.minestom.server.inventory.click.Click;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.tag.Tag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,14 @@ import java.util.function.Consumer;
  * shows it again. The chain ends when the player closes the inventory, another inventory replaces a menu in the chain,
  * or a menu is opened with plain {@link #show()}: the player's stack is cleared and every suspended ancestor's
  * {@link #onClose(Player)} runs once. The stack lives on the player (a transient tag), so it goes away with them.
+ * <p>
+ * Click guard: Minestom delivers a click to whatever inventory is open, so the second click of a fast double click
+ * that switched menus lands on the same slot of the next menu. When a menu opens while the player had another library
+ * menu open (a child from {@link #openChild(Menu)}, the parent resumed by {@link #back()}, or any menu shown from
+ * another menu's click handler), its clicks are ignored for {@link #clickGuardTicks()} ticks of the player's own tick
+ * counter ({@link Player#getAliveTicks()}): still cancelled, with no handler run and no player-inventory click let
+ * through. Each such open sets a fresh deadline, so the guard cannot get stuck. A menu opened with no inventory
+ * open, or over a plain (non-menu) inventory, is not guarded; reopening a menu over itself keeps its deadline.
  *
  * @author Mudkjp
  * @see Inventory
@@ -57,6 +66,11 @@ public abstract class Menu {
     public static final Tag<@NotNull Menu> MENU_TAG = Tag.Transient("menu");
     /** The player's navigation stack: menus {@link #back()} can return to. */
     static final Tag<@NotNull NavStack> NAV_TAG = Tag.Transient("menu-nav");
+    /**
+     * Default length of the menu-to-menu click guard, in ticks of the player's own tick counter
+     * ({@link Player#getAliveTicks()}): 5 ticks, a quarter of a second at 20 TPS. See {@link #clickGuardTicks()}.
+     */
+    public static final int DEFAULT_CLICK_GUARD_TICKS = 5;
     private static final Logger LOGGER = LoggerFactory.getLogger(Menu.class);
 
     protected final Player player;
@@ -79,6 +93,11 @@ public abstract class Menu {
     /** Being replaced by its parent in {@link #back()}: the replacement keeps the player's stack. */
     private boolean navLeaving = false;
     private Menu parent;
+    /**
+     * Clicks are ignored while the player's {@link Player#getAliveTicks()} is below this. Set afresh every time the
+     * menu opens: a deadline over another library menu, none from nothing, so it can never stay stuck.
+     */
+    private long clickGuardUntil = Long.MIN_VALUE;
 
     protected Menu(@NotNull Player player, @NotNull InventoryType type, @NotNull String title) {
         this(player, type, Component.translatable(title));
@@ -106,6 +125,7 @@ public abstract class Menu {
         // Lives as long as the inventory: re-attaches whenever this inventory is opened, however it is opened.
         this.inventory.eventNode().addListener(InventoryOpenEvent.class, event -> {
             if (event.getPlayer() != this.player || event.isCancelled()) return;
+            armClickGuard();
             if (!this.navOpening) endChain(this.inventory);
             attach();
         });
@@ -285,6 +305,32 @@ public abstract class Menu {
         return this.parent != null;
     }
 
+    /**
+     * How long, in ticks of the player's own tick counter ({@link Player#getAliveTicks()}), clicks on this menu are
+     * ignored after it replaced another library menu (see the class documentation). Read each time the menu opens.
+     * Default {@link #DEFAULT_CLICK_GUARD_TICKS}; return 0 (or less) to switch the guard off for this menu.
+     */
+    protected int clickGuardTicks() {
+        return DEFAULT_CLICK_GUARD_TICKS;
+    }
+
+    /**
+     * True while clicks on this menu are ignored: it replaced another library menu less than
+     * {@link #clickGuardTicks()} player ticks ago.
+     */
+    protected final boolean isClickGuarded() {
+        return this.player.getAliveTicks() < this.clickGuardUntil;
+    }
+
+    /**
+     * The menu below this one in the player's navigation chain: the menu that opened it with {@link #openChild(Menu)}
+     * and that {@link #back()} returns to. Null when this menu was not opened as a child, or once the chain ended.
+     */
+    @Nullable
+    protected final Menu parent() {
+        return this.parent;
+    }
+
     /** True while this menu's inventory is the player's open inventory. */
     public final boolean isCurrent() {
         return this.player.getOpenInventory() == this.inventory;
@@ -365,6 +411,7 @@ public abstract class Menu {
     private void onMenuClick(InventoryPreClickEvent event) {
         if (event.getInventory() != this.inventory) return;
         event.setCancelled(true);
+        if (isClickGuarded()) return;
         ClickHandlers slotHandlers = this.handlers.get(event.getSlot());
         if (slotHandlers != null) slotHandlers.handle(event.getClick());
     }
@@ -373,7 +420,20 @@ public abstract class Menu {
     // even while another inventory is open.
     private void onPlayerInventoryClick(InventoryPreClickEvent event) {
         if (event.getInventory() != this.player.getInventory() || !isCurrent()) return;
-        if (!this.allowPlayerInventory || movesIntoMenu(event.getClick())) event.setCancelled(true);
+        if (!this.allowPlayerInventory || movesIntoMenu(event.getClick()) || isClickGuarded()) event.setCancelled(true);
+    }
+
+    /**
+     * Runs while this menu's open event is processed, when the player's open inventory is still the one being
+     * replaced. Over another library menu: a fresh deadline. From nothing or a plain inventory: no guard. Reopened
+     * over itself: not a transition, the deadline is kept.
+     */
+    private void armClickGuard() {
+        AbstractInventory previous = this.player.getOpenInventory();
+        if (previous == this.inventory) return;
+        int ticks = clickGuardTicks();
+        boolean overMenu = previous != null && previous.getTag(MENU_TAG) != null;
+        this.clickGuardUntil = overMenu && ticks > 0 ? this.player.getAliveTicks() + ticks : Long.MIN_VALUE;
     }
 
     private static boolean movesIntoMenu(Click click) {

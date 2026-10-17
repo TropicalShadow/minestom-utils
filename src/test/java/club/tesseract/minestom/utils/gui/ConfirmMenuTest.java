@@ -49,6 +49,11 @@ class ConfirmMenuTest {
                 (byte) button, ClickType.PICKUP, Map.of(), ItemStack.Hash.of(ItemStack.AIR, MinecraftServer.process())), player);
     }
 
+    /** Waits out the click guard that a menu-to-menu transition arms. */
+    private static void tickPastGuard(Env env) {
+        for (int i = 0; i < Menu.DEFAULT_CLICK_GUARD_TICKS; i++) env.tick();
+    }
+
     private static final class Counts {
         final AtomicInteger confirm = new AtomicInteger();
         final AtomicInteger cancel = new AtomicInteger();
@@ -143,6 +148,7 @@ class ConfirmMenuTest {
         ConfirmMenu menu = counts.menu(player);
         parent.openChild(menu);
         assertTrue(menu.hasParent());
+        tickPastGuard(env);
         int before = parent.renders;
         click(player, menu.getInventory(), 11, 0);
         assertEquals(1, counts.confirm.get());
@@ -159,6 +165,7 @@ class ConfirmMenuTest {
         Counts counts = new Counts();
         ConfirmMenu menu = counts.menu(player);
         parent.openChild(menu);
+        tickPastGuard(env);
         click(player, menu.getInventory(), 15, 0);
         assertSame(parent.getInventory(), player.getOpenInventory());
         player.closeInventory();
@@ -213,6 +220,7 @@ class ConfirmMenuTest {
             menu.show();
             click(player, menu.getInventory(), slot, 0);
             assertSame(next.getInventory(), player.getOpenInventory(), "slot " + slot);
+            tickPastGuard(env);
             click(player, next.getInventory(), 0, 0);
             assertSame(next.getInventory(), player.getOpenInventory());
         }
@@ -239,6 +247,7 @@ class ConfirmMenuTest {
         Counts counts = new Counts();
         ConfirmMenu menu = counts.menu(player);
         parent.openChild(menu);
+        tickPastGuard(env);
         parent.close();
         click(player, menu.getInventory(), 11, 0);
         assertEquals(1, counts.confirm.get());
@@ -254,6 +263,7 @@ class ConfirmMenuTest {
         Counts counts = new Counts();
         ConfirmMenu menu = counts.menu(player);
         parent.openChild(menu);
+        tickPastGuard(env);
         click(player, menu.getInventory(), 11, 0);
         player.closeInventory();
         env.tick();

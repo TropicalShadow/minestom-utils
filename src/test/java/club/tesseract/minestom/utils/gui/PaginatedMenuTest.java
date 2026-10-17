@@ -133,6 +133,11 @@ class PaginatedMenuTest {
                 (byte) 0, ClickType.PICKUP, Map.of(), ItemStack.Hash.of(ItemStack.AIR, MinecraftServer.process())), player);
     }
 
+    /** Waits out the click guard that a menu-to-menu transition arms. */
+    private static void tickPastGuard(Env env) {
+        for (int i = 0; i < Menu.DEFAULT_CLICK_GUARD_TICKS; i++) env.tick();
+    }
+
     private static String name(ItemStack item) {
         Component name = item.get(DataComponents.CUSTOM_NAME);
         return name == null ? null : PlainTextComponentSerializer.plainText().serialize(name);
@@ -327,6 +332,7 @@ class PaginatedMenuTest {
         child.items(range(5, 6));
         root.openChild(child);
         assertEquals("back", name(slot(child, LAYOUT.back())));
+        tickPastGuard(env);
 
         click(player, child.getInventory(), LAYOUT.back());
         assertTrue(root.isCurrent());
@@ -351,6 +357,7 @@ class PaginatedMenuTest {
         ListMenu child = new ListMenu(player);
         child.items(List.of());
         root.openChild(child);
+        tickPastGuard(env);
         click(player, child.getInventory(), LAYOUT.back());
 
         assertTrue(root.isCurrent());
@@ -380,6 +387,7 @@ class PaginatedMenuTest {
         env.tick();
         assertEquals(rootRenders, root.renders);
 
+        tickPastGuard(env);
         click(player, child.getInventory(), LAYOUT.back());
         assertContent(root, range(0, 4));
         assertEquals(1, source.requested.size());
@@ -455,6 +463,7 @@ class PaginatedMenuTest {
         assertTrue(root.errors.isEmpty());
         assertFalse(root.loading());
 
+        tickPastGuard(env);
         click(player, child.getInventory(), LAYOUT.back());
         assertTrue(shows(root, "empty"));
 

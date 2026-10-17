@@ -88,6 +88,11 @@ class MenuTest {
                 (byte) button, type, Map.of(), ItemStack.Hash.of(ItemStack.AIR, MinecraftServer.process())), player);
     }
 
+    /** Waits out the click guard that a menu-to-menu transition arms. */
+    private static void tickPastGuard(Env env) {
+        for (int i = 0; i < Menu.DEFAULT_CLICK_GUARD_TICKS; i++) env.tick();
+    }
+
     @Test
     void unhandledSlotClickIsCancelled(Env env) {
         Player player = player(env);
@@ -339,6 +344,7 @@ class MenuTest {
         assertTrue(a.isClosed());
         assertTrue(b.isCurrent());
         assertEquals(STONE, a.getInventory().getItemStack(0));
+        tickPastGuard(env);
         click(player, b.getInventory(), 1, 0, ClickType.PICKUP);
         assertEquals(1, bClicks.get());
         assertEquals(STONE, b.getInventory().getItemStack(1));
@@ -444,6 +450,7 @@ class MenuTest {
         assertEquals(0, parent.closes);
 
         parentClicks.set(4); // state changed while the child was open
+        tickPastGuard(env);
         click(player, child.getInventory(), 1, 0, ClickType.PICKUP);
 
         assertTrue(parent.isCurrent());
@@ -453,6 +460,7 @@ class MenuTest {
         assertEquals(2, parent.renders);
         assertEquals(5, parent.getInventory().getItemStack(0).amount());
         assertEquals(0, stackSize(player));
+        tickPastGuard(env);
         click(player, parent.getInventory(), 0, 0, ClickType.PICKUP);
         assertEquals(5, parentClicks.get());
         assertTrue(player.getInventory().getCursorItem().isAir());
@@ -488,6 +496,7 @@ class MenuTest {
         assertEquals(0, root.closes);
         assertEquals(1, child.closes);
         assertEquals(1, grandchild.closes);
+        tickPastGuard(env);
         click(player, root.getInventory(), 0, 0, ClickType.PICKUP);
         assertEquals(1, rootClicks.get());
     }
@@ -797,6 +806,7 @@ class MenuTest {
         assertEquals(0, root.closes);
         assertEquals(1, child.closes);
         assertEquals(0, stackSize(player));
+        tickPastGuard(env);
         click(player, root.getInventory(), 0, 0, ClickType.PICKUP);
         assertEquals(1, rootClicks.get());
         player.closeInventory();
