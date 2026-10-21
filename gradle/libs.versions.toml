@@ -1,18 +1,18 @@
 [versions]
 lombok = "1.18.48"
-minestom = "2026.08.28-26.2"
-slf4j = "2.0.19"
-logback = "1.6.3"
+minestom = "2026.10.07-26.2"
+slf4j = "2.0.20"
+logback = "1.6.5"
 luckperms = "5.5+26.2-SNAPSHOT"
 configurate = "3.7.3"
 hikari = "7.1.0"
-h2database = "2.5.250"
+h2database = "2.5.252"
 polar = "1.16.0"
 fastutil = "8.5.19"
 axiom = "0.0.4"
 spark = "1.10-SNAPSHOT"
 bytesocks-java-client = "1.0-SNAPSHOT"
-junit = "5.13.4"
+junit = "6.1.3"
 
 
 [libraries]
